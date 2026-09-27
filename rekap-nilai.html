@@ -1,622 +1,296 @@
 <!DOCTYPE html>
 <html lang="id">
-
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#4F46E5">
-  <link rel="icon" href="icons/icon-192.png">
-  <title>Rekap Nilai Siswa</title>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
-    rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <style>
-    :root {
-      --p1: #6C63FF;
-      --p2: #4F46E5;
-      --ok: #10B981;
-      --warn: #F59E0B;
-      --danger: #EF4444;
-      --info: #378ADD;
-      --bg: #F5F6F8;
-      --surface: #fff;
-      --t1: #0F172A;
-      --t2: #475569;
-      --t3: #94A3B8;
-      --border: #E2E0FF;
-      --radius: 12px;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#4F46E5">
+<link rel="icon" href="icons/icon-192.png">
+<title>Rekap Nilai Siswa</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --p1:#6C63FF;--p2:#4F46E5;
+    --ok:#10B981;--warn:#F59E0B;--danger:#EF4444;--info:#378ADD;
+    --bg:#F5F6F8;--surface:#fff;--t1:#0F172A;--t2:#475569;--t3:#94A3B8;
+    --border:#E2E0FF;--radius:12px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--t1);min-height:100vh}
+  .wrap{max-width:1000px;margin:0 auto;padding:24px 16px 60px}
+  .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px}
+  .topbar h1{font-size:18px;font-weight:700}
+  .user-badge{font-size:12px;color:var(--t2);background:var(--surface);padding:6px 12px;border-radius:20px;border:1px solid var(--border)}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;margin-bottom:16px;box-shadow:0 2px 8px rgba(108,99,255,.06)}
+  .card h2{font-size:14px;font-weight:700;margin-bottom:14px}
+  .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+  label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom:5px}
+  select,input[type=text],input[type=number]{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;background:#fff}
+  .btn{border:none;border-radius:8px;padding:10px 18px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+  .btn-prim{background:linear-gradient(135deg,var(--p2),var(--p1));color:#fff}
+  .btn-sec{background:#EEF2FF;color:var(--p2)}
+  .btn-green{background:#E7F8F1;color:var(--ok)}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .action-bar{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;margin-bottom:16px}
+  .empty{padding:30px;text-align:center;color:var(--t3);font-size:13px}
+  .login-box{max-width:340px;margin:80px auto}
+  #login-screen{display:none}
+  #app-content{display:none}
+  body:not(.auth-ready) #login-screen,
+  body:not(.auth-ready) #app-content{display:none !important}
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0
-    }
+  #laporan{display:none}
+  .lap-header{text-align:center;margin-bottom:20px;padding-bottom:16px;border-bottom:2px solid var(--p1)}
+  .lap-header h1{font-size:20px}
+  .lap-header p{font-size:13px;color:var(--t2);margin-top:4px}
+  .ringkasan-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:20px}
+  .ring-box{background:#F5F4FF;border-radius:10px;padding:14px;text-align:center}
+  .ring-box .num{font-size:22px;font-weight:800;color:var(--p2)}
+  .ring-box .lbl{font-size:11px;color:var(--t2);margin-top:2px}
+  table.lap-table{width:100%;border-collapse:collapse;font-size:12.5px;margin-bottom:24px}
+  table.lap-table th{background:#F5F4FF;font-size:11px;text-transform:uppercase;letter-spacing:.03em;color:var(--t2);padding:8px 10px;text-align:left;border-bottom:1.5px solid var(--border)}
+  table.lap-table td{padding:7px 10px;border-bottom:1px solid var(--border)}
+  table.lap-table tr:last-child td{border-bottom:none}
+  .badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:10.5px;font-weight:700}
+  .badge-ok{background:#E7F8F1;color:var(--ok)}
+  .badge-warn{background:#FFF7E5;color:var(--warn)}
+  .badge-danger{background:#FEF2F2;color:var(--danger)}
+  .kkm-bar-wrap{background:#EEF0F5;border-radius:6px;height:8px;width:100px;overflow:hidden;display:inline-block;vertical-align:middle}
+  .kkm-bar{height:100%;background:var(--p1)}
+  .section-title{font-size:14px;font-weight:700;margin:20px 0 10px;padding-top:14px;border-top:1px solid var(--border)}
+  .flag-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px}
 
-    body {
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      background: var(--bg);
-      color: var(--t1);
-      min-height: 100vh
-    }
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--t1);color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;opacity:0;pointer-events:none;transition:.3s;z-index:99;white-space:pre-line;text-align:center}
+  .toast.show{opacity:1;bottom:30px}
+  .toast.error{background:var(--danger)}
+  .toast.success{background:var(--ok)}
+  .toast.warning{background:var(--warn)}
 
-    .wrap {
-      max-width: 1000px;
-      margin: 0 auto;
-      padding: 24px 16px 60px
-    }
+  @media print{
+    body{background:#fff}
+    .topbar,.card:not(#laporan),.action-bar,.toast{display:none !important}
+    #laporan{display:block !important}
+    .wrap{max-width:100%;padding:0}
+  }
 
-    .topbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-      gap: 10px
-    }
-
-    .topbar h1 {
-      font-size: 18px;
-      font-weight: 700
-    }
-
-    .user-badge {
-      font-size: 12px;
-      color: var(--t2);
-      background: var(--surface);
-      padding: 6px 12px;
-      border-radius: 20px;
-      border: 1px solid var(--border)
-    }
-
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 18px 20px;
-      margin-bottom: 16px;
-      box-shadow: 0 2px 8px rgba(108, 99, 255, .06)
-    }
-
-    .card h2 {
-      font-size: 14px;
-      font-weight: 700;
-      margin-bottom: 14px
-    }
-
-    .row {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 12px
-    }
-
-    label {
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--t2);
-      display: block;
-      margin-bottom: 5px
-    }
-
-    select,
-    input[type=text],
-    input[type=number] {
-      width: 100%;
-      padding: 9px 12px;
-      border: 1.5px solid var(--border);
-      border-radius: 8px;
-      font-size: 14px;
-      font-family: inherit;
-      background: #fff
-    }
-
-    .btn {
-      border: none;
-      border-radius: 8px;
-      padding: 10px 18px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      font-family: inherit
-    }
-
-    .btn-prim {
-      background: linear-gradient(135deg, var(--p2), var(--p1));
-      color: #fff
-    }
-
-    .btn-sec {
-      background: #EEF2FF;
-      color: var(--p2)
-    }
-
-    .btn-green {
-      background: #E7F8F1;
-      color: var(--ok)
-    }
-
-    .btn:disabled {
-      opacity: .5;
-      cursor: not-allowed
-    }
-
-    .action-bar {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-      margin-bottom: 16px
-    }
-
-    .empty {
-      padding: 30px;
-      text-align: center;
-      color: var(--t3);
-      font-size: 13px
-    }
-
-    .login-box {
-      max-width: 340px;
-      margin: 80px auto
-    }
-
-    #login-screen {
-      display: none
-    }
-
-    #app-content {
-      display: none
-    }
-
-    body:not(.auth-ready) #login-screen,
-    body:not(.auth-ready) #app-content {
-      display: none !important
-    }
-
-    #laporan {
-      display: none
-    }
-
-    .lap-header {
-      text-align: center;
-      margin-bottom: 20px;
-      padding-bottom: 16px;
-      border-bottom: 2px solid var(--p1)
-    }
-
-    .lap-header h1 {
-      font-size: 20px
-    }
-
-    .lap-header p {
-      font-size: 13px;
-      color: var(--t2);
-      margin-top: 4px
-    }
-
-    .ringkasan-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-      gap: 10px;
-      margin-bottom: 20px
-    }
-
-    .ring-box {
-      background: #F5F4FF;
-      border-radius: 10px;
-      padding: 14px;
-      text-align: center
-    }
-
-    .ring-box .num {
-      font-size: 22px;
-      font-weight: 800;
-      color: var(--p2)
-    }
-
-    .ring-box .lbl {
-      font-size: 11px;
-      color: var(--t2);
-      margin-top: 2px
-    }
-
-    table.lap-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 12.5px;
-      margin-bottom: 24px
-    }
-
-    table.lap-table th {
-      background: #F5F4FF;
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: .03em;
-      color: var(--t2);
-      padding: 8px 10px;
-      text-align: left;
-      border-bottom: 1.5px solid var(--border)
-    }
-
-    table.lap-table td {
-      padding: 7px 10px;
-      border-bottom: 1px solid var(--border)
-    }
-
-    table.lap-table tr:last-child td {
-      border-bottom: none
-    }
-
-    .badge {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: 6px;
-      font-size: 10.5px;
-      font-weight: 700
-    }
-
-    .badge-ok {
-      background: #E7F8F1;
-      color: var(--ok)
-    }
-
-    .badge-warn {
-      background: #FFF7E5;
-      color: var(--warn)
-    }
-
-    .badge-danger {
-      background: #FEF2F2;
-      color: var(--danger)
-    }
-
-    .kkm-bar-wrap {
-      background: #EEF0F5;
-      border-radius: 6px;
-      height: 8px;
-      width: 100px;
-      overflow: hidden;
-      display: inline-block;
-      vertical-align: middle
-    }
-
-    .kkm-bar {
-      height: 100%;
-      background: var(--p1)
-    }
-
-    .section-title {
-      font-size: 14px;
-      font-weight: 700;
-      margin: 20px 0 10px;
-      padding-top: 14px;
-      border-top: 1px solid var(--border)
-    }
-
-    .flag-dot {
-      display: inline-block;
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      margin-right: 4px
-    }
-
-    .toast {
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: var(--t1);
-      color: #fff;
-      padding: 10px 20px;
-      border-radius: 8px;
-      font-size: 13px;
-      opacity: 0;
-      pointer-events: none;
-      transition: .3s;
-      z-index: 99;
-      white-space: pre-line;
-      text-align: center
-    }
-
-    .toast.show {
-      opacity: 1;
-      bottom: 30px
-    }
-
-    .toast.error {
-      background: var(--danger)
-    }
-
-    .toast.success {
-      background: var(--ok)
-    }
-
-    .toast.warning {
-      background: var(--warn)
-    }
-
-    @media print {
-      body {
-        background: #fff
-      }
-
-      .topbar,
-      .card:not(#laporan),
-      .action-bar,
-      .toast {
-        display: none !important
-      }
-
-      #laporan {
-        display: block !important
-      }
-
-      .wrap {
-        max-width: 100%;
-        padding: 0
-      }
-    }
-
-    .app-nav {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-      margin-bottom: 16px
-    }
-
-    .app-nav a {
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--t2);
-      background: var(--surface);
-      padding: 7px 12px;
-      border-radius: 20px;
-      border: 1px solid var(--border);
-      text-decoration: none
-    }
-
-    .app-nav a.active {
-      background: linear-gradient(135deg, var(--p2), var(--p1));
-      color: #fff;
-      border-color: transparent
-    }
-
-    .btn-logout {
-      font-size: 11px;
-      color: var(--t3);
-      background: none;
-      border: none;
-      cursor: pointer;
-      text-decoration: underline;
-      margin-left: 8px
-    }
-  </style>
+  .app-nav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+  .app-nav a{font-size:12px;font-weight:600;color:var(--t2);background:var(--surface);padding:7px 12px;border-radius:20px;border:1px solid var(--border);text-decoration:none}
+  .app-nav a.active{background:linear-gradient(135deg,var(--p2),var(--p1));color:#fff;border-color:transparent}
+  .btn-logout{font-size:11px;color:var(--t3);background:none;border:none;cursor:pointer;text-decoration:underline;margin-left:8px}
+</style>
 </head>
-
 <body>
 
-  <div id="login-screen" class="wrap">
-    <div class="login-box">
-      <h1 style="margin-bottom:16px">📊 Rekap Nilai Siswa</h1>
-      <div class="card">
-        <label>Email</label>
-        <input type="text" id="login-email" placeholder="admin@sekolah.id" style="margin-bottom:12px">
-        <label>Kata Sandi</label>
-        <input type="text" id="login-pass" placeholder="••••••" style="margin-bottom:16px">
-        <button class="btn btn-prim" style="width:100%" onclick="doLogin()">Masuk</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="app-content" class="wrap">
-    <div class="topbar">
-      <h1>📊 Rekap Nilai Siswa</h1>
-      <span class="user-badge" id="user-badge">–</span><button class="btn-logout" onclick="doLogout()">Keluar</button>
-    </div>
-
-    <nav class="app-nav"><a class="app-nav-link" href="input-nilai.html">📝 Input Nilai</a><a class="app-nav-link"
-        href="absensi-siswa.html">🗓️ Absensi</a><a class="app-nav-link active" href="rekap-nilai.html">📊 Rekap
-        Nilai</a></nav>
+<div id="login-screen" class="wrap">
+  <div class="login-box">
+    <h1 style="margin-bottom:16px">📊 Rekap Nilai Siswa</h1>
     <div class="card">
-      <h2>Parameter Rekap</h2>
-      <div class="row">
-        <div>
-          <label>Tahun Ajaran</label>
-          <input type="text" id="sel-tahun" value="2025/2026">
-        </div>
-        <div>
-          <label>Semester</label>
-          <select id="sel-semester" onchange="toggleSemesterUI()">
-            <option value="ganjil">Ganjil (tanpa kenaikan kelas)</option>
-            <option value="genap">Genap (+ kenaikan kelas)</option>
-          </select>
-        </div>
-        <div>
-          <label>Kelas</label>
-          <select id="sel-kelas">
-            <option value="">— Pilih Kelas —</option>
-            <option>1A</option>
-            <option>1B</option>
-            <option>2A</option>
-            <option>2B</option>
-            <option>3A</option>
-            <option>3B</option>
-            <option>4A</option>
-            <option>4B</option>
-            <option>5A</option>
-            <option>5B</option>
-            <option>6A</option>
-            <option>6B</option>
-          </select>
-        </div>
-        <div>
-          <label>KKTP / KKM</label>
-          <input type="number" id="sel-kkm" value="75" min="0" max="100">
-        </div>
+      <label>Email</label>
+      <input type="text" id="login-email" placeholder="admin@sekolah.id" style="margin-bottom:12px">
+      <label>Kata Sandi</label>
+      <input type="text" id="login-pass" placeholder="••••••" style="margin-bottom:16px">
+      <button class="btn btn-prim" style="width:100%" onclick="doLogin()">Masuk</button>
+    </div>
+  </div>
+</div>
+
+<div id="app-content" class="wrap">
+  <div class="topbar">
+    <h1>📊 Rekap Nilai Siswa</h1>
+    <span class="user-badge" id="user-badge">–</span><button class="btn-logout" onclick="doLogout()">Keluar</button>
+  </div>
+
+  <nav class="app-nav"><a class="app-nav-link" href="input-nilai.html">📝 Input Nilai</a><a class="app-nav-link" href="absensi-siswa.html">🗓️ Absensi</a><a class="app-nav-link active" href="rekap-nilai.html">📊 Rekap Nilai</a></nav>
+  <div class="card">
+    <h2>Parameter Rekap</h2>
+    <div class="row">
+      <div>
+        <label>Tahun Ajaran</label>
+        <input type="text" id="sel-tahun" value="2025/2026">
       </div>
-      <div style="text-align:right;margin-top:14px">
-        <button class="btn btn-prim" onclick="generateRekap()">🔄 Buat Rekap</button>
+      <div>
+        <label>Semester</label>
+        <select id="sel-semester" onchange="toggleSemesterUI()">
+          <option value="ganjil">Ganjil (tanpa kenaikan kelas)</option>
+          <option value="genap">Genap (+ kenaikan kelas)</option>
+        </select>
+      </div>
+      <div>
+        <label>Kelas</label>
+        <select id="sel-kelas">
+          <option value="">— Pilih Kelas —</option>
+          <option>1A</option><option>1B</option><option>2A</option><option>2B</option>
+          <option>3A</option><option>3B</option><option>4A</option><option>4B</option>
+          <option>5A</option><option>5B</option><option>6A</option><option>6B</option>
+        </select>
+      </div>
+      <div>
+        <label>KKTP / KKM</label>
+        <input type="number" id="sel-kkm" value="75" min="0" max="100">
       </div>
     </div>
-
-    <div class="action-bar" id="action-bar" style="display:none">
-      <button class="btn btn-green" onclick="exportExcel()">📥 Export Excel</button>
-      <button class="btn btn-sec" onclick="window.print()">🖨️ Export / Cetak PDF</button>
-    </div>
-
-    <div id="laporan-container">
-      <div class="empty">Atur parameter di atas lalu klik "Buat Rekap".</div>
+    <div style="text-align:right;margin-top:14px">
+      <button class="btn btn-prim" onclick="generateRekap()">🔄 Buat Rekap</button>
     </div>
   </div>
 
-  <div class="toast" id="toast"></div>
+  <div class="action-bar" id="action-bar" style="display:none">
+    <button class="btn btn-green" onclick="exportExcel()">📥 Export Excel</button>
+    <button class="btn btn-sec" onclick="window.print()">🖨️ Export / Cetak PDF</button>
+  </div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-    import { firebaseConfig } from "./assets/firebase-config.js";
+  <div id="laporan-container">
+    <div class="empty">Atur parameter di atas lalu klik "Buat Rekap".</div>
+  </div>
+</div>
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getDatabase(app);
+<div class="toast" id="toast"></div>
 
-    let currentUserNama = '';
-    let lastRekapData = null; // dipakai ulang untuk export excel
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+  import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+  import { firebaseConfig } from "./assets/firebase-config.js";
 
-    function esc(s) { const d = document.createElement('div'); d.innerText = s ?? ''; return d.innerHTML; }
-    function showToast(msg, type = 'info') {
-      const t = document.getElementById('toast');
-      t.textContent = msg; t.className = `toast show ${type}`;
-      setTimeout(() => t.classList.remove('show'), 2600);
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getDatabase(app);
+
+  let currentUserNama = '';
+  let lastRekapData = null; // dipakai ulang untuk export excel
+
+  function esc(s){ const d=document.createElement('div'); d.innerText=s??''; return d.innerHTML; }
+  function showToast(msg, type='info'){
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.className = `toast show ${type}`;
+    setTimeout(() => t.classList.remove('show'), 2600);
+  }
+
+  window.doLogin = async () => {
+    const email = document.getElementById('login-email').value.trim();
+    const pass = document.getElementById('login-pass').value;
+    if (!email || !pass) { showToast('Isi email & kata sandi', 'warning'); return; }
+    try { await signInWithEmailAndPassword(auth, email, pass); }
+    catch { showToast('❌ Login gagal', 'error'); }
+  };
+
+  window.doLogout = async () => { await signOut(auth); };
+
+  onAuthStateChanged(auth, async (user) => {
+    document.body.classList.add('auth-ready');
+    if (!user) {
+      document.getElementById('login-screen').style.display = 'block';
+      document.getElementById('app-content').style.display = 'none';
+      return;
+    }
+    const snap = await get(ref(db, `users/${user.uid}`));
+    currentUserNama = snap.exists() ? (snap.val().nama || user.email) : user.email;
+    document.getElementById('user-badge').textContent = `👤 ${currentUserNama}`;
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app-content').style.display = 'block';
+  });
+
+  // ══ GENERATE REKAP ══
+  window.generateRekap = async () => {
+    const tahun = document.getElementById('sel-tahun').value.trim();
+    const semester = document.getElementById('sel-semester').value;
+    const kelas = document.getElementById('sel-kelas').value;
+    const kkm = parseFloat(document.getElementById('sel-kkm').value) || 75;
+    const container = document.getElementById('laporan-container');
+
+    if (!kelas) { showToast('Pilih kelas dulu', 'warning'); return; }
+    container.innerHTML = '<div class="empty">Menghitung rekap…</div>';
+    document.getElementById('action-bar').style.display = 'none';
+
+    // 1. Ambil siswa
+    const siswaSnap = await get(ref(db, `siswa/${kelas}`));
+    if (!siswaSnap.exists()) {
+      container.innerHTML = '<div class="empty">Belum ada siswa di kelas ini.</div>';
+      return;
+    }
+    const siswaList = [];
+    siswaSnap.forEach(c => siswaList.push({ uid: c.key, nama: c.val().nama }));
+    siswaList.sort((a, b) => a.nama.localeCompare(b.nama));
+
+    // 2. Ambil nilai semester ini
+    const nilaiSnap = await get(ref(db, `nilai/${tahun}/${semester}/${kelas}`));
+    const nilaiRaw = nilaiSnap.exists() ? nilaiSnap.val() : {};
+
+    // 3. Kumpulkan daftar mapel yang muncul
+    const mapelSet = new Set();
+    Object.values(nilaiRaw).forEach(mapelObj => Object.keys(mapelObj || {}).forEach(m => mapelSet.add(m)));
+    const mapelList = Array.from(mapelSet).sort();
+
+    if (mapelList.length === 0) {
+      container.innerHTML = '<div class="empty">Belum ada nilai yang diinput untuk kelas & semester ini.</div>';
+      return;
     }
 
-    window.doLogin = async () => {
-      const email = document.getElementById('login-email').value.trim();
-      const pass = document.getElementById('login-pass').value;
-      if (!email || !pass) { showToast('Isi email & kata sandi', 'warning'); return; }
-      try { await signInWithEmailAndPassword(auth, email, pass); }
-      catch { showToast('❌ Login gagal', 'error'); }
-    };
-
-    window.doLogout = async () => { await signOut(auth); };
-
-    onAuthStateChanged(auth, async (user) => {
-      document.body.classList.add('auth-ready');
-      if (!user) {
-        document.getElementById('login-screen').style.display = 'block';
-        document.getElementById('app-content').style.display = 'none';
-        return;
+    // 4. (Hanya semester genap) Ambil rekap kehadiran setahun untuk indikator, BUKAN pengurang nilai
+    let rekapAbsensi = {}; // {uid: {hadir, sakit, izin, alfa}}
+    if (semester === 'genap') {
+      const absenSnap = await get(ref(db, `absensi_siswa/${tahun}/${kelas}`));
+      if (absenSnap.exists()) {
+        absenSnap.forEach(tglNode => {
+          tglNode.forEach(siswaNode => {
+            const uid = siswaNode.key;
+            const status = siswaNode.val().status;
+            if (!rekapAbsensi[uid]) rekapAbsensi[uid] = { H: 0, S: 0, I: 0, A: 0 };
+            if (rekapAbsensi[uid][status] !== undefined) rekapAbsensi[uid][status]++;
+          });
+        });
       }
-      const snap = await get(ref(db, `users/${user.uid}`));
-      currentUserNama = snap.exists() ? (snap.val().nama || user.email) : user.email;
-      document.getElementById('user-badge').textContent = `👤 ${currentUserNama}`;
-      document.getElementById('login-screen').style.display = 'none';
-      document.getElementById('app-content').style.display = 'block';
+    }
+
+    // 5. Hitung rata-rata per siswa & per mapel
+    const dataSiswa = siswaList.map(s => {
+      const nilaiSiswa = nilaiRaw[s.uid] || {};
+      const nilaiPerMapel = mapelList.map(m => nilaiSiswa[m] ?? null);
+      const nilaiTerisi = nilaiPerMapel.filter(n => n !== null);
+      const rata = nilaiTerisi.length ? nilaiTerisi.reduce((a, b) => a + b, 0) / nilaiTerisi.length : null;
+      const absen = rekapAbsensi[s.uid] || { H: 0, S: 0, I: 0, A: 0 };
+      const totalTidakHadir = absen.S + absen.I + absen.A;
+      return { ...s, nilaiPerMapel, rata, absen, totalTidakHadir };
     });
 
-    // ══ GENERATE REKAP ══
-    window.generateRekap = async () => {
-      const tahun = document.getElementById('sel-tahun').value.trim();
-      const semester = document.getElementById('sel-semester').value;
-      const kelas = document.getElementById('sel-kelas').value;
-      const kkm = parseFloat(document.getElementById('sel-kkm').value) || 75;
-      const container = document.getElementById('laporan-container');
+    // Ranking berdasarkan rata-rata (yang belum ada nilai ditaruh di akhir)
+    const ranked = [...dataSiswa].sort((a, b) => (b.rata ?? -1) - (a.rata ?? -1));
+    ranked.forEach((s, i) => s.peringkat = i + 1);
 
-      if (!kelas) { showToast('Pilih kelas dulu', 'warning'); return; }
-      container.innerHTML = '<div class="empty">Menghitung rekap…</div>';
-      document.getElementById('action-bar').style.display = 'none';
+    // Rata-rata per mapel (seluruh kelas)
+    const rataPerMapel = mapelList.map((m, idx) => {
+      const nilaiMapelSemua = dataSiswa.map(s => s.nilaiPerMapel[idx]).filter(n => n !== null);
+      const rata = nilaiMapelSemua.length ? nilaiMapelSemua.reduce((a, b) => a + b, 0) / nilaiMapelSemua.length : null;
+      return { mapel: m, rata };
+    });
 
-      // 1. Ambil siswa
-      const siswaSnap = await get(ref(db, `siswa/${kelas}`));
-      if (!siswaSnap.exists()) {
-        container.innerHTML = '<div class="empty">Belum ada siswa di kelas ini.</div>';
-        return;
-      }
-      const siswaList = [];
-      siswaSnap.forEach(c => siswaList.push({ uid: c.key, nama: c.val().nama }));
-      siswaList.sort((a, b) => a.nama.localeCompare(b.nama));
+    const rataKelas = (() => {
+      const semua = dataSiswa.map(s => s.rata).filter(n => n !== null);
+      return semua.length ? semua.reduce((a, b) => a + b, 0) / semua.length : null;
+    })();
 
-      // 2. Ambil nilai semester ini
-      const nilaiSnap = await get(ref(db, `nilai/${tahun}/${semester}/${kelas}`));
-      const nilaiRaw = nilaiSnap.exists() ? nilaiSnap.val() : {};
+    const jumlahTuntasKKM = dataSiswa.filter(s => s.rata !== null && s.rata >= kkm).length;
 
-      // 3. Kumpulkan daftar mapel yang muncul
-      const mapelSet = new Set();
-      Object.values(nilaiRaw).forEach(mapelObj => Object.keys(mapelObj || {}).forEach(m => mapelSet.add(m)));
-      const mapelList = Array.from(mapelSet).sort();
+    lastRekapData = { tahun, semester, kelas, kkm, mapelList, dataSiswa: ranked, rataPerMapel, rataKelas, jumlahTuntasKKM };
 
-      if (mapelList.length === 0) {
-        container.innerHTML = '<div class="empty">Belum ada nilai yang diinput untuk kelas & semester ini.</div>';
-        return;
-      }
+    renderLaporan(lastRekapData);
+    document.getElementById('action-bar').style.display = 'flex';
+  };
 
-      // 4. (Hanya semester genap) Ambil rekap kehadiran setahun untuk indikator, BUKAN pengurang nilai
-      let rekapAbsensi = {}; // {uid: {hadir, sakit, izin, alfa}}
-      if (semester === 'genap') {
-        const absenSnap = await get(ref(db, `absensi_siswa/${tahun}/${kelas}`));
-        if (absenSnap.exists()) {
-          absenSnap.forEach(tglNode => {
-            tglNode.forEach(siswaNode => {
-              const uid = siswaNode.key;
-              const status = siswaNode.val().status;
-              if (!rekapAbsensi[uid]) rekapAbsensi[uid] = { H: 0, S: 0, I: 0, A: 0 };
-              if (rekapAbsensi[uid][status] !== undefined) rekapAbsensi[uid][status]++;
-            });
-          });
-        }
-      }
+  function kategoriNilai(n) {
+    if (n === null) return { label: '–', cls: '' };
+    if (n >= 90) return { label: 'Istimewa', cls: 'badge-ok' };
+    if (n >= 80) return { label: 'Baik Sekali', cls: 'badge-ok' };
+    if (n >= 70) return { label: 'Baik', cls: 'badge-warn' };
+    return { label: 'Cukup', cls: 'badge-danger' };
+  }
 
-      // 5. Hitung rata-rata per siswa & per mapel
-      const dataSiswa = siswaList.map(s => {
-        const nilaiSiswa = nilaiRaw[s.uid] || {};
-        const nilaiPerMapel = mapelList.map(m => nilaiSiswa[m] ?? null);
-        const nilaiTerisi = nilaiPerMapel.filter(n => n !== null);
-        const rata = nilaiTerisi.length ? nilaiTerisi.reduce((a, b) => a + b, 0) / nilaiTerisi.length : null;
-        const absen = rekapAbsensi[s.uid] || { H: 0, S: 0, I: 0, A: 0 };
-        const totalTidakHadir = absen.S + absen.I + absen.A;
-        return { ...s, nilaiPerMapel, rata, absen, totalTidakHadir };
-      });
+  function renderLaporan(d) {
+    const tglCetak = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+    const labelSemester = d.semester === 'ganjil' ? 'Ganjil' : 'Genap';
 
-      // Ranking berdasarkan rata-rata (yang belum ada nilai ditaruh di akhir)
-      const ranked = [...dataSiswa].sort((a, b) => (b.rata ?? -1) - (a.rata ?? -1));
-      ranked.forEach((s, i) => s.peringkat = i + 1);
-
-      // Rata-rata per mapel (seluruh kelas)
-      const rataPerMapel = mapelList.map((m, idx) => {
-        const nilaiMapelSemua = dataSiswa.map(s => s.nilaiPerMapel[idx]).filter(n => n !== null);
-        const rata = nilaiMapelSemua.length ? nilaiMapelSemua.reduce((a, b) => a + b, 0) / nilaiMapelSemua.length : null;
-        return { mapel: m, rata };
-      });
-
-      const rataKelas = (() => {
-        const semua = dataSiswa.map(s => s.rata).filter(n => n !== null);
-        return semua.length ? semua.reduce((a, b) => a + b, 0) / semua.length : null;
-      })();
-
-      const jumlahTuntasKKM = dataSiswa.filter(s => s.rata !== null && s.rata >= kkm).length;
-
-      lastRekapData = { tahun, semester, kelas, kkm, mapelList, dataSiswa: ranked, rataPerMapel, rataKelas, jumlahTuntasKKM };
-
-      renderLaporan(lastRekapData);
-      document.getElementById('action-bar').style.display = 'flex';
-    };
-
-    function kategoriNilai(n) {
-      if (n === null) return { label: '–', cls: '' };
-      if (n >= 90) return { label: 'Istimewa', cls: 'badge-ok' };
-      if (n >= 80) return { label: 'Baik Sekali', cls: 'badge-ok' };
-      if (n >= 70) return { label: 'Baik', cls: 'badge-warn' };
-      return { label: 'Cukup', cls: 'badge-danger' };
-    }
-
-    function renderLaporan(d) {
-      const tglCetak = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
-      const labelSemester = d.semester === 'ganjil' ? 'Ganjil' : 'Genap';
-
-      let html = `<div id="laporan">
+    let html = `<div id="laporan">
       <div class="lap-header">
         <h1>Rekap Nilai Siswa — Kelas ${esc(d.kelas)}</h1>
         <p>Semester ${labelSemester} · Tahun Ajaran ${esc(d.tahun)} · KKTP: ${d.kkm} · Dicetak ${tglCetak}</p>
@@ -634,15 +308,15 @@
         <thead><tr><th>Mata Pelajaran</th><th>Rata-rata</th><th>Terhadap KKTP</th><th>Status</th></tr></thead>
         <tbody>
           ${d.rataPerMapel.map(m => {
-        const persen = m.rata !== null ? Math.min(100, (m.rata / d.kkm) * 100) : 0;
-        const tuntas = m.rata !== null && m.rata >= d.kkm;
-        return `<tr>
+            const persen = m.rata !== null ? Math.min(100, (m.rata / d.kkm) * 100) : 0;
+            const tuntas = m.rata !== null && m.rata >= d.kkm;
+            return `<tr>
               <td>${esc(m.mapel)}</td>
               <td>${m.rata !== null ? m.rata.toFixed(1) : '–'}</td>
               <td><span class="kkm-bar-wrap"><span class="kkm-bar" style="width:${persen}%"></span></span></td>
               <td><span class="badge ${tuntas ? 'badge-ok' : 'badge-danger'}">${tuntas ? 'Tuntas' : 'Belum Tuntas'}</span></td>
             </tr>`;
-      }).join('')}
+          }).join('')}
         </tbody>
       </table>
 
@@ -656,16 +330,16 @@
         </tr></thead>
         <tbody>
           ${d.dataSiswa.map(s => {
-        const kat = kategoriNilai(s.rata);
-        let kolomAbsen = '';
-        if (d.semester === 'genap') {
-          const flagRisiko = s.rata !== null && s.rata < d.kkm && s.totalTidakHadir >= 10;
-          kolomAbsen = `<td>
+            const kat = kategoriNilai(s.rata);
+            let kolomAbsen = '';
+            if (d.semester === 'genap') {
+              const flagRisiko = s.rata !== null && s.rata < d.kkm && s.totalTidakHadir >= 10;
+              kolomAbsen = `<td>
                 ${flagRisiko ? '<span class="flag-dot" style="background:var(--danger)"></span>' : ''}
                 H:${s.absen.H} S:${s.absen.S} I:${s.absen.I} A:${s.absen.A}
               </td>`;
-        }
-        return `<tr>
+            }
+            return `<tr>
               <td>${s.peringkat}</td>
               <td>${esc(s.nama)}</td>
               ${s.nilaiPerMapel.map(n => `<td>${n !== null ? n : '–'}</td>`).join('')}
@@ -673,12 +347,12 @@
               <td><span class="badge ${kat.cls}">${kat.label}</span></td>
               ${kolomAbsen}
             </tr>`;
-      }).join('')}
+          }).join('')}
         </tbody>
       </table>`;
 
-      if (d.semester === 'genap') {
-        html += `
+    if (d.semester === 'genap') {
+      html += `
       <div class="section-title">Pertimbangan Kenaikan Kelas</div>
       <p style="font-size:12px;color:var(--t2);margin-bottom:10px">
         Sesuai Panduan Pembelajaran dan Asesmen (2025), status di bawah adalah <strong>bahan musyawarah dewan guru</strong>,
@@ -690,57 +364,56 @@
         <thead><tr><th>Nama</th><th>Rata-rata</th><th>Total Tidak Hadir</th><th>Rekomendasi Awal</th></tr></thead>
         <tbody>
           ${d.dataSiswa.map(s => {
-          const tuntas = s.rata !== null && s.rata >= d.kkm;
-          const perluPerhatian = s.rata !== null && s.rata < d.kkm && s.totalTidakHadir >= 10;
-          let rekom, cls;
-          if (perluPerhatian) { rekom = '⚠️ Perlu Perhatian & Musyawarah'; cls = 'badge-danger'; }
-          else if (tuntas) { rekom = 'Layak Naik Kelas'; cls = 'badge-ok'; }
-          else { rekom = 'Perlu Remedial'; cls = 'badge-warn'; }
-          return `<tr>
+            const tuntas = s.rata !== null && s.rata >= d.kkm;
+            const perluPerhatian = s.rata !== null && s.rata < d.kkm && s.totalTidakHadir >= 10;
+            let rekom, cls;
+            if (perluPerhatian) { rekom = '⚠️ Perlu Perhatian & Musyawarah'; cls = 'badge-danger'; }
+            else if (tuntas) { rekom = 'Layak Naik Kelas'; cls = 'badge-ok'; }
+            else { rekom = 'Perlu Remedial'; cls = 'badge-warn'; }
+            return `<tr>
               <td>${esc(s.nama)}</td>
               <td>${s.rata !== null ? s.rata.toFixed(1) : '–'}</td>
               <td>${s.totalTidakHadir} hari</td>
               <td><span class="badge ${cls}">${rekom}</span></td>
             </tr>`;
-        }).join('')}
+          }).join('')}
         </tbody>
       </table>`;
+    }
+
+    html += `</div>`;
+    document.getElementById('laporan-container').innerHTML = html;
+  }
+
+  // ══ EXPORT EXCEL ══
+  window.exportExcel = () => {
+    if (!lastRekapData) return;
+    const d = lastRekapData;
+    const wb = XLSX.utils.book_new();
+
+    const header = ['No', 'Nama', ...d.mapelList, 'Rata-rata', 'Kategori'];
+    if (d.semester === 'genap') header.push('Hadir', 'Sakit', 'Izin', 'Alfa', 'Rekomendasi');
+
+    const rows = d.dataSiswa.map((s, i) => {
+      const kat = kategoriNilai(s.rata);
+      const row = [i + 1, s.nama, ...s.nilaiPerMapel.map(n => n ?? ''), s.rata !== null ? +s.rata.toFixed(1) : '', kat.label];
+      if (d.semester === 'genap') {
+        const tuntas = s.rata !== null && s.rata >= d.kkm;
+        const perluPerhatian = s.rata !== null && s.rata < d.kkm && s.totalTidakHadir >= 10;
+        const rekom = perluPerhatian ? 'Perlu Perhatian & Musyawarah' : (tuntas ? 'Layak Naik Kelas' : 'Perlu Remedial');
+        row.push(s.absen.H, s.absen.S, s.absen.I, s.absen.A, rekom);
       }
+      return row;
+    });
 
-      html += `</div>`;
-      document.getElementById('laporan-container').innerHTML = html;
-    }
-
-    // ══ EXPORT EXCEL ══
-    window.exportExcel = () => {
-      if (!lastRekapData) return;
-      const d = lastRekapData;
-      const wb = XLSX.utils.book_new();
-
-      const header = ['No', 'Nama', ...d.mapelList, 'Rata-rata', 'Kategori'];
-      if (d.semester === 'genap') header.push('Hadir', 'Sakit', 'Izin', 'Alfa', 'Rekomendasi');
-
-      const rows = d.dataSiswa.map((s, i) => {
-        const kat = kategoriNilai(s.rata);
-        const row = [i + 1, s.nama, ...s.nilaiPerMapel.map(n => n ?? ''), s.rata !== null ? +s.rata.toFixed(1) : '', kat.label];
-        if (d.semester === 'genap') {
-          const tuntas = s.rata !== null && s.rata >= d.kkm;
-          const perluPerhatian = s.rata !== null && s.rata < d.kkm && s.totalTidakHadir >= 10;
-          const rekom = perluPerhatian ? 'Perlu Perhatian & Musyawarah' : (tuntas ? 'Layak Naik Kelas' : 'Perlu Remedial');
-          row.push(s.absen.H, s.absen.S, s.absen.I, s.absen.A, rekom);
-        }
-        return row;
-      });
-
-      const ws = XLSX.utils.aoa_to_sheet([header, ...rows]);
-      XLSX.utils.book_append_sheet(wb, ws, 'Rekap Nilai');
-      XLSX.writeFile(wb, `Rekap_Nilai_${d.kelas}_${d.semester}_${d.tahun.replace('/', '-')}.xlsx`);
-      showToast('✅ File Excel diunduh', 'success');
-    };
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./sw.js').catch(() => { });
-    }
-  </script>
+    const ws = XLSX.utils.aoa_to_sheet([header, ...rows]);
+    XLSX.utils.book_append_sheet(wb, ws, 'Rekap Nilai');
+    XLSX.writeFile(wb, `Rekap_Nilai_${d.kelas}_${d.semester}_${d.tahun.replace('/', '-')}.xlsx`);
+    showToast('✅ File Excel diunduh', 'success');
+  };
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  }
+</script>
 </body>
-
 </html>
