@@ -1,244 +1,504 @@
 <!DOCTYPE html>
 <html lang="id">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#4F46E5">
-<link rel="icon" href="icons/icon-192.png">
-<title>Input Nilai Siswa · Guru</title>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<style>
-  :root{
-    --p1:#6C63FF;--p2:#4F46E5;--g1:#1D9E75;--g2:#378ADD;
-    --ok:#10B981;--warn:#F59E0B;--danger:#EF4444;
-    --bg:#F5F6F8;--surface:#fff;--t1:#0F172A;--t2:#475569;--t3:#94A3B8;
-    --border:#E2E0FF;--radius:12px;
-  }
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--t1);min-height:100vh}
-  .wrap{max-width:900px;margin:0 auto;padding:24px 16px 60px}
-  .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
-  .topbar h1{font-size:18px;font-weight:700}
-  .topbar .user-badge{font-size:12px;color:var(--t2);background:var(--surface);padding:6px 12px;border-radius:20px;border:1px solid var(--border)}
-  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;margin-bottom:16px;box-shadow:0 2px 8px rgba(108,99,255,.06)}
-  .card h2{font-size:14px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:6px}
-  .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:4px}
-  label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom:5px}
-  select,input[type=text],input[type=number]{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;background:#fff}
-  select:focus,input:focus{outline:none;border-color:var(--p1)}
-  .btn{border:none;border-radius:8px;padding:10px 18px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
-  .btn-prim{background:linear-gradient(135deg,var(--p2),var(--p1));color:#fff}
-  .btn-sec{background:#EEF2FF;color:var(--p2)}
-  .btn-danger{background:#FEF2F2;color:var(--danger)}
-  .btn:disabled{opacity:.5;cursor:not-allowed}
-  table{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px}
-  thead th{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--t3);padding:8px 10px;border-bottom:1.5px solid var(--border);text-align:left}
-  tbody td{padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:middle}
-  tbody tr:last-child td{border-bottom:none}
-  .nilai-input{width:70px;text-align:center}
-  .empty{padding:24px;text-align:center;color:var(--t3);font-size:13px}
-  .add-siswa-row{display:flex;gap:8px;margin-top:12px}
-  .add-siswa-row input{flex:1}
-  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--t1);color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;opacity:0;pointer-events:none;transition:.3s;z-index:99;white-space:pre-line;text-align:center}
-  .toast.show{opacity:1;bottom:30px}
-  .toast.error{background:var(--danger)}
-  .toast.success{background:var(--ok)}
-  .toast.warning{background:var(--warn)}
-  .hint{font-size:12px;color:var(--t3);margin-top:6px}
-  .login-box{max-width:340px;margin:80px auto;text-align:center}
-  .login-box .card{text-align:left}
-  #app-content{display:none}
 
-  .app-nav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
-  .app-nav a{font-size:12px;font-weight:600;color:var(--t2);background:var(--surface);padding:7px 12px;border-radius:20px;border:1px solid var(--border);text-decoration:none}
-  .app-nav a.active{background:linear-gradient(135deg,var(--p2),var(--p1));color:#fff;border-color:transparent}
-  .btn-logout{font-size:11px;color:var(--t3);background:none;border:none;cursor:pointer;text-decoration:underline;margin-left:8px}
-</style>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#4F46E5">
+  <link rel="icon" href="icons/icon-192.png">
+  <title>Input Nilai Siswa · Guru</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --p1: #6C63FF;
+      --p2: #4F46E5;
+      --g1: #1D9E75;
+      --g2: #378ADD;
+      --ok: #10B981;
+      --warn: #F59E0B;
+      --danger: #EF4444;
+      --bg: #F5F6F8;
+      --surface: #fff;
+      --t1: #0F172A;
+      --t2: #475569;
+      --t3: #94A3B8;
+      --border: #E2E0FF;
+      --radius: 12px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: var(--bg);
+      color: var(--t1);
+      min-height: 100vh
+    }
+
+    .wrap {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 24px 16px 60px
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px
+    }
+
+    .topbar h1 {
+      font-size: 18px;
+      font-weight: 700
+    }
+
+    .topbar .user-badge {
+      font-size: 12px;
+      color: var(--t2);
+      background: var(--surface);
+      padding: 6px 12px;
+      border-radius: 20px;
+      border: 1px solid var(--border)
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 8px rgba(108, 99, 255, .06)
+    }
+
+    .card h2 {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+      margin-bottom: 4px
+    }
+
+    label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--t2);
+      display: block;
+      margin-bottom: 5px
+    }
+
+    select,
+    input[type=text],
+    input[type=number] {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      background: #fff
+    }
+
+    select:focus,
+    input:focus {
+      outline: none;
+      border-color: var(--p1)
+    }
+
+    .btn {
+      border: none;
+      border-radius: 8px;
+      padding: 10px 18px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit
+    }
+
+    .btn-prim {
+      background: linear-gradient(135deg, var(--p2), var(--p1));
+      color: #fff
+    }
+
+    .btn-sec {
+      background: #EEF2FF;
+      color: var(--p2)
+    }
+
+    .btn-danger {
+      background: #FEF2F2;
+      color: var(--danger)
+    }
+
+    .btn:disabled {
+      opacity: .5;
+      cursor: not-allowed
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin-top: 10px
+    }
+
+    thead th {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      color: var(--t3);
+      padding: 8px 10px;
+      border-bottom: 1.5px solid var(--border);
+      text-align: left
+    }
+
+    tbody td {
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle
+    }
+
+    tbody tr:last-child td {
+      border-bottom: none
+    }
+
+    .nilai-input {
+      width: 70px;
+      text-align: center
+    }
+
+    .empty {
+      padding: 24px;
+      text-align: center;
+      color: var(--t3);
+      font-size: 13px
+    }
+
+    .add-siswa-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px
+    }
+
+    .add-siswa-row input {
+      flex: 1
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--t1);
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 13px;
+      opacity: 0;
+      pointer-events: none;
+      transition: .3s;
+      z-index: 99;
+      white-space: pre-line;
+      text-align: center
+    }
+
+    .toast.show {
+      opacity: 1;
+      bottom: 30px
+    }
+
+    .toast.error {
+      background: var(--danger)
+    }
+
+    .toast.success {
+      background: var(--ok)
+    }
+
+    .toast.warning {
+      background: var(--warn)
+    }
+
+    .hint {
+      font-size: 12px;
+      color: var(--t3);
+      margin-top: 6px
+    }
+
+    .login-box {
+      max-width: 340px;
+      margin: 80px auto;
+      text-align: center
+    }
+
+    .login-box .card {
+      text-align: left
+    }
+
+    #login-screen {
+      display: none
+    }
+
+    #app-content {
+      display: none
+    }
+
+    body:not(.auth-ready) #login-screen,
+    body:not(.auth-ready) #app-content {
+      display: none !important
+    }
+
+    .app-nav {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 16px
+    }
+
+    .app-nav a {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--t2);
+      background: var(--surface);
+      padding: 7px 12px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      text-decoration: none
+    }
+
+    .app-nav a.active {
+      background: linear-gradient(135deg, var(--p2), var(--p1));
+      color: #fff;
+      border-color: transparent
+    }
+
+    .btn-logout {
+      font-size: 11px;
+      color: var(--t3);
+      background: none;
+      border: none;
+      cursor: pointer;
+      text-decoration: underline;
+      margin-left: 8px
+    }
+  </style>
 </head>
+
 <body>
 
-<div id="login-screen" class="wrap">
-  <div class="login-box">
-    <h1 style="margin-bottom:16px">📝 Input Nilai Siswa</h1>
+  <div id="login-screen" class="wrap">
+    <div class="login-box">
+      <h1 style="margin-bottom:16px">📝 Input Nilai Siswa</h1>
+      <div class="card">
+        <label>Email</label>
+        <input type="text" id="login-email" placeholder="guru@sekolah.id" style="margin-bottom:12px">
+        <label>Kata Sandi</label>
+        <input type="text" id="login-pass" placeholder="••••••" style="margin-bottom:16px">
+        <button class="btn btn-prim" style="width:100%" onclick="doLogin()">Masuk</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="app-content" class="wrap">
+    <div class="topbar">
+      <h1>📝 Input Nilai Siswa</h1>
+      <span class="user-badge" id="user-badge">–</span><button class="btn-logout" onclick="doLogout()">Keluar</button>
+    </div>
+
+    <nav class="app-nav"><a class="app-nav-link active" href="input-nilai.html">📝 Input Nilai</a><a
+        class="app-nav-link" href="absensi-siswa.html">🗓️ Absensi</a><a class="app-nav-link" href="rekap-nilai.html">📊
+        Rekap Nilai</a></nav>
     <div class="card">
-      <label>Email</label>
-      <input type="text" id="login-email" placeholder="guru@sekolah.id" style="margin-bottom:12px">
-      <label>Kata Sandi</label>
-      <input type="text" id="login-pass" placeholder="••••••" style="margin-bottom:16px">
-      <button class="btn btn-prim" style="width:100%" onclick="doLogin()">Masuk</button>
-    </div>
-  </div>
-</div>
-
-<div id="app-content" class="wrap">
-  <div class="topbar">
-    <h1>📝 Input Nilai Siswa</h1>
-    <span class="user-badge" id="user-badge">–</span><button class="btn-logout" onclick="doLogout()">Keluar</button>
-  </div>
-
-  <nav class="app-nav"><a class="app-nav-link active" href="input-nilai.html">📝 Input Nilai</a><a class="app-nav-link" href="absensi-siswa.html">🗓️ Absensi</a><a class="app-nav-link" href="rekap-nilai.html">📊 Rekap Nilai</a></nav>
-  <div class="card">
-    <h2>1️⃣ Pilih Konteks Penilaian</h2>
-    <div class="row">
-      <div>
-        <label>Tahun Ajaran</label>
-        <input type="text" id="sel-tahun" placeholder="2025/2026" value="2025/2026">
+      <h2>1️⃣ Pilih Konteks Penilaian</h2>
+      <div class="row">
+        <div>
+          <label>Tahun Ajaran</label>
+          <input type="text" id="sel-tahun" placeholder="2025/2026" value="2025/2026">
+        </div>
+        <div>
+          <label>Semester</label>
+          <select id="sel-semester">
+            <option value="ganjil">Ganjil</option>
+            <option value="genap">Genap</option>
+          </select>
+        </div>
+        <div>
+          <label>Kelas</label>
+          <select id="sel-kelas" onchange="onKontekChange()">
+            <option value="">— Pilih Kelas —</option>
+            <option>1A</option>
+            <option>1B</option>
+            <option>2A</option>
+            <option>2B</option>
+            <option>3A</option>
+            <option>3B</option>
+            <option>4A</option>
+            <option>4B</option>
+            <option>5A</option>
+            <option>5B</option>
+            <option>6A</option>
+            <option>6B</option>
+          </select>
+        </div>
+        <div>
+          <label>Mata Pelajaran</label>
+          <select id="sel-mapel" onchange="onKontekChange()">
+            <option value="">— Pilih Mapel —</option>
+            <option>Bahasa Indonesia</option>
+            <option>Pend. Pancasila (PKN)</option>
+            <option>Matematika</option>
+            <option>IPAS</option>
+            <option>Seni Rupa</option>
+            <option>PAI</option>
+            <option>PJOK</option>
+            <option>Bahasa Inggris</option>
+          </select>
+        </div>
       </div>
-      <div>
-        <label>Semester</label>
-        <select id="sel-semester">
-          <option value="ganjil">Ganjil</option>
-          <option value="genap">Genap</option>
-        </select>
-      </div>
-      <div>
-        <label>Kelas</label>
-        <select id="sel-kelas" onchange="onKontekChange()">
-          <option value="">— Pilih Kelas —</option>
-          <option>1A</option><option>1B</option><option>2A</option><option>2B</option>
-          <option>3A</option><option>3B</option><option>4A</option><option>4B</option>
-          <option>5A</option><option>5B</option><option>6A</option><option>6B</option>
-        </select>
-      </div>
-      <div>
-        <label>Mata Pelajaran</label>
-        <select id="sel-mapel" onchange="onKontekChange()">
-          <option value="">— Pilih Mapel —</option>
-          <option>Bahasa Indonesia</option><option>Pend. Pancasila (PKN)</option>
-          <option>Matematika</option><option>IPAS</option><option>Seni Rupa</option>
-          <option>PAI</option><option>PJOK</option><option>Bahasa Inggris</option>
-        </select>
-      </div>
-    </div>
-    <p class="hint">KKM mata pelajaran ini: <strong id="kkm-display">75</strong> (bisa diubah admin di pengaturan)</p>
-  </div>
-
-  <div class="card" id="siswa-card">
-    <h2>2️⃣ Daftar Siswa &amp; Input Nilai</h2>
-    <div id="tabel-nilai-wrap">
-      <div class="empty">Pilih kelas &amp; mata pelajaran dulu di atas.</div>
+      <p class="hint">KKM mata pelajaran ini: <strong id="kkm-display">75</strong> (bisa diubah admin di pengaturan)</p>
     </div>
 
-    <div id="add-siswa-section" style="display:none">
-      <p class="hint" style="margin-top:16px;margin-bottom:0">Belum ada siswa di kelas ini? Tambahkan dulu:</p>
-      <div class="add-siswa-row">
-        <input type="text" id="input-nama-siswa" placeholder="Nama lengkap siswa">
-        <button class="btn btn-sec" onclick="tambahSiswa()">+ Tambah</button>
+    <div class="card" id="siswa-card">
+      <h2>2️⃣ Daftar Siswa &amp; Input Nilai</h2>
+      <div id="tabel-nilai-wrap">
+        <div class="empty">Pilih kelas &amp; mata pelajaran dulu di atas.</div>
       </div>
+
+      <div id="add-siswa-section" style="display:none">
+        <p class="hint" style="margin-top:16px;margin-bottom:0">Belum ada siswa di kelas ini? Tambahkan dulu:</p>
+        <div class="add-siswa-row">
+          <input type="text" id="input-nama-siswa" placeholder="Nama lengkap siswa">
+          <button class="btn btn-sec" onclick="tambahSiswa()">+ Tambah</button>
+        </div>
+      </div>
+    </div>
+
+    <div style="text-align:right">
+      <button class="btn btn-prim" id="btn-simpan-semua" onclick="simpanSemuaNilai()" disabled>💾 Simpan Semua
+        Nilai</button>
     </div>
   </div>
 
-  <div style="text-align:right">
-    <button class="btn btn-prim" id="btn-simpan-semua" onclick="simpanSemuaNilai()" disabled>💾 Simpan Semua Nilai</button>
-  </div>
-</div>
+  <div class="toast" id="toast"></div>
 
-<div class="toast" id="toast"></div>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getDatabase, ref, get, set, push, child } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { firebaseConfig } from "./assets/firebase-config.js";
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-  import { getDatabase, ref, get, set, push, child } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-  import { firebaseConfig } from "./assets/firebase-config.js";
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getDatabase(app);
+    let currentUserNama = '';
+    let currentSiswaList = [];   // [{uid, nama}]
+    let currentNilaiMap = {};    // {uid: nilai}
+    const KKM_DEFAULT = 75;
 
-  let currentUserNama = '';
-  let currentSiswaList = [];   // [{uid, nama}]
-  let currentNilaiMap = {};    // {uid: nilai}
-  const KKM_DEFAULT = 75;
+    function esc(s) { const d = document.createElement('div'); d.innerText = s ?? ''; return d.innerHTML; }
 
-  function esc(s){ const d=document.createElement('div'); d.innerText=s??''; return d.innerHTML; }
-
-  function showToast(msg, type='info'){
-    const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.className = `toast show ${type}`;
-    setTimeout(() => t.classList.remove('show'), 2600);
-  }
-
-  window.doLogin = async () => {
-    const email = document.getElementById('login-email').value.trim();
-    const pass = document.getElementById('login-pass').value;
-    if (!email || !pass) { showToast('Isi email & kata sandi', 'warning'); return; }
-    try {
-      await signInWithEmailAndPassword(auth, email, pass);
-    } catch (err) {
-      showToast('❌ Login gagal: periksa email/kata sandi', 'error');
-    }
-  };
-
-  window.doLogout = async () => { await signOut(auth); };
-
-  onAuthStateChanged(auth, async (user) => {
-    if (!user) {
-      document.getElementById('login-screen').style.display = 'block';
-      document.getElementById('app-content').style.display = 'none';
-      return;
-    }
-    // Ambil profil guru dari users/{uid} (path sederhana, sesuaikan kalau perlu)
-    const snap = await get(ref(db, `users/${user.uid}`));
-    currentUserNama = snap.exists() ? (snap.val().nama || user.email) : user.email;
-
-    document.getElementById('user-badge').textContent = `👤 ${currentUserNama}`;
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('app-content').style.display = 'block';
-  });
-
-  // ══ SAAT KELAS / MAPEL DIPILIH ══
-  window.onKontekChange = async () => {
-    const kelas = document.getElementById('sel-kelas').value;
-    const mapel = document.getElementById('sel-mapel').value;
-    const wrap = document.getElementById('tabel-nilai-wrap');
-    const addSection = document.getElementById('add-siswa-section');
-    const btnSimpan = document.getElementById('btn-simpan-semua');
-
-    if (!kelas || !mapel) {
-      wrap.innerHTML = '<div class="empty">Pilih kelas &amp; mata pelajaran dulu di atas.</div>';
-      addSection.style.display = 'none';
-      btnSimpan.disabled = true;
-      return;
+    function showToast(msg, type = 'info') {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = `toast show ${type}`;
+      setTimeout(() => t.classList.remove('show'), 2600);
     }
 
-    wrap.innerHTML = '<div class="empty">Memuat data siswa…</div>';
-    addSection.style.display = 'block';
-
-    // 1. Ambil daftar siswa kelas ini
-    const siswaSnap = await get(ref(db, `siswa/${kelas}`));
-    currentSiswaList = [];
-    if (siswaSnap.exists()) {
-      siswaSnap.forEach(c => currentSiswaList.push({ uid: c.key, nama: c.val().nama }));
-      currentSiswaList.sort((a, b) => a.nama.localeCompare(b.nama));
-    }
-
-    // 2. Ambil nilai yang sudah tersimpan (kalau ada) untuk konteks ini
-    const tahun = document.getElementById('sel-tahun').value.trim() || '2025/2026';
-    const semester = document.getElementById('sel-semester').value;
-    currentNilaiMap = {};
-    if (currentSiswaList.length > 0) {
-      const nilaiSnap = await get(ref(db, `nilai/${tahun}/${semester}/${kelas}`));
-      if (nilaiSnap.exists()) {
-        nilaiSnap.forEach(c => {
-          const mapelVal = c.child(mapel).val();
-          if (mapelVal !== null) currentNilaiMap[c.key] = mapelVal;
-        });
+    window.doLogin = async () => {
+      const email = document.getElementById('login-email').value.trim();
+      const pass = document.getElementById('login-pass').value;
+      if (!email || !pass) { showToast('Isi email & kata sandi', 'warning'); return; }
+      try {
+        await signInWithEmailAndPassword(auth, email, pass);
+      } catch (err) {
+        showToast('❌ Login gagal: periksa email/kata sandi', 'error');
       }
-    }
+    };
 
-    renderTabelNilai();
-    btnSimpan.disabled = currentSiswaList.length === 0;
-  };
+    window.doLogout = async () => { await signOut(auth); };
 
-  function renderTabelNilai() {
-    const wrap = document.getElementById('tabel-nilai-wrap');
-    if (currentSiswaList.length === 0) {
-      wrap.innerHTML = '<div class="empty">Belum ada siswa terdaftar di kelas ini. Tambahkan lewat form di bawah.</div>';
-      return;
-    }
-    let rows = currentSiswaList.map((s, i) => `
+    onAuthStateChanged(auth, async (user) => {
+      document.body.classList.add('auth-ready');
+      if (!user) {
+        document.getElementById('login-screen').style.display = 'block';
+        document.getElementById('app-content').style.display = 'none';
+        return;
+      }
+      // Ambil profil guru dari users/{uid} (path sederhana, sesuaikan kalau perlu)
+      const snap = await get(ref(db, `users/${user.uid}`));
+      currentUserNama = snap.exists() ? (snap.val().nama || user.email) : user.email;
+
+      document.getElementById('user-badge').textContent = `👤 ${currentUserNama}`;
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app-content').style.display = 'block';
+    });
+
+    // ══ SAAT KELAS / MAPEL DIPILIH ══
+    window.onKontekChange = async () => {
+      const kelas = document.getElementById('sel-kelas').value;
+      const mapel = document.getElementById('sel-mapel').value;
+      const wrap = document.getElementById('tabel-nilai-wrap');
+      const addSection = document.getElementById('add-siswa-section');
+      const btnSimpan = document.getElementById('btn-simpan-semua');
+
+      if (!kelas || !mapel) {
+        wrap.innerHTML = '<div class="empty">Pilih kelas &amp; mata pelajaran dulu di atas.</div>';
+        addSection.style.display = 'none';
+        btnSimpan.disabled = true;
+        return;
+      }
+
+      wrap.innerHTML = '<div class="empty">Memuat data siswa…</div>';
+      addSection.style.display = 'block';
+
+      // 1. Ambil daftar siswa kelas ini
+      const siswaSnap = await get(ref(db, `siswa/${kelas}`));
+      currentSiswaList = [];
+      if (siswaSnap.exists()) {
+        siswaSnap.forEach(c => currentSiswaList.push({ uid: c.key, nama: c.val().nama }));
+        currentSiswaList.sort((a, b) => a.nama.localeCompare(b.nama));
+      }
+
+      // 2. Ambil nilai yang sudah tersimpan (kalau ada) untuk konteks ini
+      const tahun = document.getElementById('sel-tahun').value.trim() || '2025/2026';
+      const semester = document.getElementById('sel-semester').value;
+      currentNilaiMap = {};
+      if (currentSiswaList.length > 0) {
+        const nilaiSnap = await get(ref(db, `nilai/${tahun}/${semester}/${kelas}`));
+        if (nilaiSnap.exists()) {
+          nilaiSnap.forEach(c => {
+            const mapelVal = c.child(mapel).val();
+            if (mapelVal !== null) currentNilaiMap[c.key] = mapelVal;
+          });
+        }
+      }
+
+      renderTabelNilai();
+      btnSimpan.disabled = currentSiswaList.length === 0;
+    };
+
+    function renderTabelNilai() {
+      const wrap = document.getElementById('tabel-nilai-wrap');
+      if (currentSiswaList.length === 0) {
+        wrap.innerHTML = '<div class="empty">Belum ada siswa terdaftar di kelas ini. Tambahkan lewat form di bawah.</div>';
+        return;
+      }
+      let rows = currentSiswaList.map((s, i) => `
       <tr>
         <td>${i + 1}</td>
         <td>${esc(s.nama)}</td>
@@ -246,85 +506,86 @@
               data-uid="${s.uid}" value="${currentNilaiMap[s.uid] ?? ''}" placeholder="–"></td>
         <td><button class="btn btn-danger" style="padding:4px 10px;font-size:11px" onclick="hapusSiswa('${s.uid}','${esc(s.nama)}')">Hapus</button></td>
       </tr>`).join('');
-    wrap.innerHTML = `
+      wrap.innerHTML = `
       <table>
         <thead><tr><th>No</th><th>Nama Siswa</th><th style="text-align:center">Nilai</th><th></th></tr></thead>
         <tbody>${rows}</tbody>
       </table>`;
-  }
-
-  // ══ TAMBAH SISWA BARU ══
-  window.tambahSiswa = async () => {
-    const kelas = document.getElementById('sel-kelas').value;
-    const input = document.getElementById('input-nama-siswa');
-    const nama = input.value.trim();
-    if (!kelas) { showToast('Pilih kelas dulu', 'warning'); return; }
-    if (!nama) { showToast('Isi nama siswa dulu', 'warning'); return; }
-
-    try {
-      const newRef = push(ref(db, `siswa/${kelas}`));
-      await set(newRef, { nama, kelas, dibuatOleh: currentUserNama, dibuatPada: Date.now() });
-      input.value = '';
-      showToast(`✅ ${nama} ditambahkan`, 'success');
-      onKontekChange(); // refresh daftar
-    } catch (err) {
-      showToast('❌ Gagal menambah siswa: ' + err.message, 'error');
     }
-  };
 
-  window.hapusSiswa = async (uid, nama) => {
-    if (!confirm(`Hapus ${nama} dari kelas ini? Nilai yang sudah diinput untuk siswa ini juga akan hilang.`)) return;
-    const kelas = document.getElementById('sel-kelas').value;
-    try {
-      await set(ref(db, `siswa/${kelas}/${uid}`), null);
-      showToast(`🗑️ ${nama} dihapus`, 'success');
-      onKontekChange();
-    } catch (err) {
-      showToast('❌ Gagal menghapus: ' + err.message, 'error');
-    }
-  };
+    // ══ TAMBAH SISWA BARU ══
+    window.tambahSiswa = async () => {
+      const kelas = document.getElementById('sel-kelas').value;
+      const input = document.getElementById('input-nama-siswa');
+      const nama = input.value.trim();
+      if (!kelas) { showToast('Pilih kelas dulu', 'warning'); return; }
+      if (!nama) { showToast('Isi nama siswa dulu', 'warning'); return; }
 
-  // ══ SIMPAN SEMUA NILAI ══
-  window.simpanSemuaNilai = async () => {
-    const kelas = document.getElementById('sel-kelas').value;
-    const mapel = document.getElementById('sel-mapel').value;
-    const tahun = document.getElementById('sel-tahun').value.trim();
-    const semester = document.getElementById('sel-semester').value;
-
-    if (!kelas || !mapel || !tahun) { showToast('Lengkapi konteks penilaian dulu', 'warning'); return; }
-
-    const inputs = document.querySelectorAll('.nilai-input');
-    const updates = {};
-    let jumlahDiisi = 0;
-
-    for (const inp of inputs) {
-      const uid = inp.dataset.uid;
-      const val = inp.value.trim();
-      if (val === '') continue;
-      const num = parseFloat(val);
-      if (isNaN(num) || num < 0 || num > 100) {
-        showToast(`❌ Nilai tidak valid untuk salah satu siswa (harus 0–100)`, 'error');
-        inp.focus();
-        return;
+      try {
+        const newRef = push(ref(db, `siswa/${kelas}`));
+        await set(newRef, { nama, kelas, dibuatOleh: currentUserNama, dibuatPada: Date.now() });
+        input.value = '';
+        showToast(`✅ ${nama} ditambahkan`, 'success');
+        onKontekChange(); // refresh daftar
+      } catch (err) {
+        showToast('❌ Gagal menambah siswa: ' + err.message, 'error');
       }
-      updates[`nilai/${tahun}/${semester}/${kelas}/${uid}/${mapel}`] = num;
-      jumlahDiisi++;
-    }
+    };
 
-    if (jumlahDiisi === 0) { showToast('Belum ada nilai yang diisi', 'warning'); return; }
+    window.hapusSiswa = async (uid, nama) => {
+      if (!confirm(`Hapus ${nama} dari kelas ini? Nilai yang sudah diinput untuk siswa ini juga akan hilang.`)) return;
+      const kelas = document.getElementById('sel-kelas').value;
+      try {
+        await set(ref(db, `siswa/${kelas}/${uid}`), null);
+        showToast(`🗑️ ${nama} dihapus`, 'success');
+        onKontekChange();
+      } catch (err) {
+        showToast('❌ Gagal menghapus: ' + err.message, 'error');
+      }
+    };
 
-    try {
-      // Tulis satu per satu path (Realtime Database tidak punya multi-path update lewat client di sini,
-      // jadi kita pakai Promise.all agar tetap cepat)
-      await Promise.all(Object.entries(updates).map(([path, val]) => set(ref(db, path), val)));
-      showToast(`✅ ${jumlahDiisi} nilai berhasil disimpan`, 'success');
-    } catch (err) {
-      showToast('❌ Gagal menyimpan: ' + err.message, 'error');
+    // ══ SIMPAN SEMUA NILAI ══
+    window.simpanSemuaNilai = async () => {
+      const kelas = document.getElementById('sel-kelas').value;
+      const mapel = document.getElementById('sel-mapel').value;
+      const tahun = document.getElementById('sel-tahun').value.trim();
+      const semester = document.getElementById('sel-semester').value;
+
+      if (!kelas || !mapel || !tahun) { showToast('Lengkapi konteks penilaian dulu', 'warning'); return; }
+
+      const inputs = document.querySelectorAll('.nilai-input');
+      const updates = {};
+      let jumlahDiisi = 0;
+
+      for (const inp of inputs) {
+        const uid = inp.dataset.uid;
+        const val = inp.value.trim();
+        if (val === '') continue;
+        const num = parseFloat(val);
+        if (isNaN(num) || num < 0 || num > 100) {
+          showToast(`❌ Nilai tidak valid untuk salah satu siswa (harus 0–100)`, 'error');
+          inp.focus();
+          return;
+        }
+        updates[`nilai/${tahun}/${semester}/${kelas}/${uid}/${mapel}`] = num;
+        jumlahDiisi++;
+      }
+
+      if (jumlahDiisi === 0) { showToast('Belum ada nilai yang diisi', 'warning'); return; }
+
+      try {
+        // Tulis satu per satu path (Realtime Database tidak punya multi-path update lewat client di sini,
+        // jadi kita pakai Promise.all agar tetap cepat)
+        await Promise.all(Object.entries(updates).map(([path, val]) => set(ref(db, path), val)));
+        showToast(`✅ ${jumlahDiisi} nilai berhasil disimpan`, 'success');
+      } catch (err) {
+        showToast('❌ Gagal menyimpan: ' + err.message, 'error');
+      }
+    };
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js').catch(() => { });
     }
-  };
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js').catch(() => {});
-  }
-</script>
+  </script>
 </body>
+
 </html>
