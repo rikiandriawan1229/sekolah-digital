@@ -1,272 +1,640 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#4F46E5">
-<link rel="icon" href="icons/icon-192.png">
-<title>Absensi Siswa · Wali Kelas</title>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
-<style>
-  :root{
-    --p1:#6C63FF;--p2:#4F46E5;
-    --ok:#10B981;--warn:#F59E0B;--danger:#EF4444;--info:#378ADD;
-    --bg:#F5F6F8;--surface:#fff;--t1:#0F172A;--t2:#475569;--t3:#94A3B8;
-    --border:#E2E0FF;--radius:12px;
-  }
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--t1);min-height:100vh}
-  .wrap{max-width:900px;margin:0 auto;padding:24px 16px 60px}
-  .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
-  .topbar h1{font-size:18px;font-weight:700}
-  .topbar .user-badge{font-size:12px;color:var(--t2);background:var(--surface);padding:6px 12px;border-radius:20px;border:1px solid var(--border)}
-  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;margin-bottom:16px;box-shadow:0 2px 8px rgba(108,99,255,.06)}
-  .card h2{font-size:14px;font-weight:700;margin-bottom:14px}
-  .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
-  label{font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom:5px}
-  select,input[type=text],input[type=date]{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;background:#fff}
-  select:focus,input:focus{outline:none;border-color:var(--p1)}
-  .btn{border:none;border-radius:8px;padding:10px 18px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
-  .btn-prim{background:linear-gradient(135deg,var(--p2),var(--p1));color:#fff}
-  .btn-sec{background:#EEF2FF;color:var(--p2)}
-  .btn-quick{background:#F1F5F9;color:var(--t2);font-size:11px;padding:6px 10px}
-  .btn:disabled{opacity:.5;cursor:not-allowed}
-  .empty{padding:24px;text-align:center;color:var(--t3);font-size:13px}
-  .quick-actions{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
-  .siswa-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
-  .siswa-row:last-child{border-bottom:none}
-  .siswa-nama{flex:1;font-size:13.5px;font-weight:600}
-  .status-group{display:flex;gap:5px}
-  .status-btn{border:1.5px solid var(--border);background:#fff;border-radius:7px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;color:var(--t3);transition:.15s}
-  .status-btn.active[data-s="H"]{background:var(--ok);border-color:var(--ok);color:#fff}
-  .status-btn.active[data-s="S"]{background:var(--info);border-color:var(--info);color:#fff}
-  .status-btn.active[data-s="I"]{background:var(--warn);border-color:var(--warn);color:#fff}
-  .status-btn.active[data-s="A"]{background:var(--danger);border-color:var(--danger);color:#fff}
-  .ket-input{width:130px;font-size:12px;padding:6px 8px}
-  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--t1);color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;opacity:0;pointer-events:none;transition:.3s;z-index:99;white-space:pre-line;text-align:center}
-  .toast.show{opacity:1;bottom:30px}
-  .toast.error{background:var(--danger)}
-  .toast.success{background:var(--ok)}
-  .toast.warning{background:var(--warn)}
-  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--t2);margin-top:10px}
-  .legend span{display:flex;align-items:center;gap:5px}
-  .dot{width:8px;height:8px;border-radius:50%;display:inline-block}
-  .login-box{max-width:340px;margin:80px auto}
-  #login-screen{display:none}
-  #app-content{display:none}
-  body:not(.auth-ready) #login-screen,
-  body:not(.auth-ready) #app-content{display:none !important}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#4F46E5">
+  <link rel="icon" href="icons/icon-192.png">
+  <title>Absensi Siswa · Wali Kelas</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+  <style>
+    :root {
+      --p1: #6C63FF;
+      --p2: #4F46E5;
+      --ok: #10B981;
+      --warn: #F59E0B;
+      --danger: #EF4444;
+      --info: #378ADD;
+      --bg: #F5F6F8;
+      --surface: #fff;
+      --t1: #0F172A;
+      --t2: #475569;
+      --t3: #94A3B8;
+      --border: #E2E0FF;
+      --radius: 12px;
+    }
 
-  .link-siswa{display:block;text-align:center;margin-top:18px;font-size:13px;color:var(--p2);text-decoration:underline;cursor:pointer;background:none;border:none;font-family:inherit}
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
 
-  #qr-screen{display:none;max-width:420px;margin:40px auto;text-align:center}
-  #qr-screen h1{font-size:20px;margin-bottom:6px}
-  #qr-screen p.sub{font-size:13px;color:var(--t2);margin-bottom:18px}
-  #qr-reader{border-radius:var(--radius);overflow:hidden;border:1px solid var(--border)}
-  .qr-status{margin-top:18px;padding:16px;border-radius:var(--radius);font-size:14px;font-weight:700;display:none}
-  .qr-status.ok{display:block;background:#E7F8F1;color:var(--ok)}
-  .qr-status.err{display:block;background:#FEF2F2;color:var(--danger)}
-  .qr-status.info{display:block;background:#EEF2FF;color:var(--p2)}
-  .qr-back{margin-top:18px}
-  .summary-bar{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--t2);margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
-  .summary-bar b{color:var(--t1)}
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: var(--bg);
+      color: var(--t1);
+      min-height: 100vh
+    }
 
-  .app-nav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
-  .app-nav a{font-size:12px;font-weight:600;color:var(--t2);background:var(--surface);padding:7px 12px;border-radius:20px;border:1px solid var(--border);text-decoration:none}
-  .app-nav a.active{background:linear-gradient(135deg,var(--p2),var(--p1));color:#fff;border-color:transparent}
-  .btn-logout{font-size:11px;color:var(--t3);background:none;border:none;cursor:pointer;text-decoration:underline;margin-left:8px}
-</style>
+    .wrap {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 24px 16px 60px
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px
+    }
+
+    .topbar h1 {
+      font-size: 18px;
+      font-weight: 700
+    }
+
+    .topbar .user-badge {
+      font-size: 12px;
+      color: var(--t2);
+      background: var(--surface);
+      padding: 6px 12px;
+      border-radius: 20px;
+      border: 1px solid var(--border)
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 8px rgba(108, 99, 255, .06)
+    }
+
+    .card h2 {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 14px
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px
+    }
+
+    label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--t2);
+      display: block;
+      margin-bottom: 5px
+    }
+
+    select,
+    input[type=text],
+    input[type=date] {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      background: #fff
+    }
+
+    select:focus,
+    input:focus {
+      outline: none;
+      border-color: var(--p1)
+    }
+
+    .btn {
+      border: none;
+      border-radius: 8px;
+      padding: 10px 18px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit
+    }
+
+    .btn-prim {
+      background: linear-gradient(135deg, var(--p2), var(--p1));
+      color: #fff
+    }
+
+    .btn-sec {
+      background: #EEF2FF;
+      color: var(--p2)
+    }
+
+    .btn-quick {
+      background: #F1F5F9;
+      color: var(--t2);
+      font-size: 11px;
+      padding: 6px 10px
+    }
+
+    .btn:disabled {
+      opacity: .5;
+      cursor: not-allowed
+    }
+
+    .empty {
+      padding: 24px;
+      text-align: center;
+      color: var(--t3);
+      font-size: 13px
+    }
+
+    .quick-actions {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+      flex-wrap: wrap
+    }
+
+    .siswa-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border)
+    }
+
+    .siswa-row:last-child {
+      border-bottom: none
+    }
+
+    .siswa-nama {
+      flex: 1;
+      font-size: 13.5px;
+      font-weight: 600
+    }
+
+    .status-group {
+      display: flex;
+      gap: 5px
+    }
+
+    .status-btn {
+      border: 1.5px solid var(--border);
+      background: #fff;
+      border-radius: 7px;
+      padding: 5px 10px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      color: var(--t3);
+      transition: .15s
+    }
+
+    .status-btn.active[data-s="H"] {
+      background: var(--ok);
+      border-color: var(--ok);
+      color: #fff
+    }
+
+    .status-btn.active[data-s="S"] {
+      background: var(--info);
+      border-color: var(--info);
+      color: #fff
+    }
+
+    .status-btn.active[data-s="I"] {
+      background: var(--warn);
+      border-color: var(--warn);
+      color: #fff
+    }
+
+    .status-btn.active[data-s="A"] {
+      background: var(--danger);
+      border-color: var(--danger);
+      color: #fff
+    }
+
+    .ket-input {
+      width: 130px;
+      font-size: 12px;
+      padding: 6px 8px
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--t1);
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 13px;
+      opacity: 0;
+      pointer-events: none;
+      transition: .3s;
+      z-index: 99;
+      white-space: pre-line;
+      text-align: center
+    }
+
+    .toast.show {
+      opacity: 1;
+      bottom: 30px
+    }
+
+    .toast.error {
+      background: var(--danger)
+    }
+
+    .toast.success {
+      background: var(--ok)
+    }
+
+    .toast.warning {
+      background: var(--warn)
+    }
+
+    .legend {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      font-size: 11px;
+      color: var(--t2);
+      margin-top: 10px
+    }
+
+    .legend span {
+      display: flex;
+      align-items: center;
+      gap: 5px
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block
+    }
+
+    .login-box {
+      max-width: 340px;
+      margin: 80px auto
+    }
+
+    #login-screen {
+      display: none
+    }
+
+    #app-content {
+      display: none
+    }
+
+    body:not(.auth-ready) #login-screen,
+    body:not(.auth-ready) #app-content {
+      display: none !important
+    }
+
+    .link-siswa {
+      display: block;
+      text-align: center;
+      margin-top: 18px;
+      font-size: 13px;
+      color: var(--p2);
+      text-decoration: underline;
+      cursor: pointer;
+      background: none;
+      border: none;
+      font-family: inherit
+    }
+
+    .btn-scan {
+      width: 100%;
+      padding: 11px 14px;
+      background: transparent;
+      border: 1.5px solid var(--p2);
+      border-radius: 10px;
+      color: var(--p2);
+      font-weight: 600;
+      text-decoration: none
+    }
+
+    .btn-scan:active {
+      background: rgba(79, 70, 229, .08)
+    }
+
+    #qr-screen {
+      display: none;
+      max-width: 420px;
+      margin: 40px auto;
+      text-align: center
+    }
+
+    #qr-screen h1 {
+      font-size: 20px;
+      margin-bottom: 6px
+    }
+
+    #qr-screen p.sub {
+      font-size: 13px;
+      color: var(--t2);
+      margin-bottom: 18px
+    }
+
+    #qr-reader {
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 1px solid var(--border)
+    }
+
+    .qr-status {
+      margin-top: 18px;
+      padding: 16px;
+      border-radius: var(--radius);
+      font-size: 14px;
+      font-weight: 700;
+      display: none
+    }
+
+    .qr-status.ok {
+      display: block;
+      background: #E7F8F1;
+      color: var(--ok)
+    }
+
+    .qr-status.err {
+      display: block;
+      background: #FEF2F2;
+      color: var(--danger)
+    }
+
+    .qr-status.info {
+      display: block;
+      background: #EEF2FF;
+      color: var(--p2)
+    }
+
+    .qr-back {
+      margin-top: 18px
+    }
+
+    .summary-bar {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      font-size: 12px;
+      color: var(--t2);
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border)
+    }
+
+    .summary-bar b {
+      color: var(--t1)
+    }
+
+    .app-nav {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 16px
+    }
+
+    .app-nav a {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--t2);
+      background: var(--surface);
+      padding: 7px 12px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      text-decoration: none
+    }
+
+    .app-nav a.active {
+      background: linear-gradient(135deg, var(--p2), var(--p1));
+      color: #fff;
+      border-color: transparent
+    }
+
+    .btn-logout {
+      font-size: 11px;
+      color: var(--t3);
+      background: none;
+      border: none;
+      cursor: pointer;
+      text-decoration: underline;
+      margin-left: 8px
+    }
+  </style>
 </head>
+
 <body>
 
-<div id="login-screen" class="wrap">
-  <div class="login-box">
-    <h1 style="margin-bottom:16px">🗓️ Absensi Siswa</h1>
+  <div id="login-screen" class="wrap">
+    <div class="login-box">
+      <h1 style="margin-bottom:16px">🗓️ Absensi Siswa</h1>
+      <div class="card">
+        <label>Email</label>
+        <input type="text" id="login-email" placeholder="guru@sekolah.id" style="margin-bottom:12px">
+        <label>Kata Sandi</label>
+        <input type="text" id="login-pass" placeholder="••••••" style="margin-bottom:16px">
+        <button class="btn btn-prim" style="width:100%" onclick="doLogin()">Masuk</button>
+      </div>
+      <button class="link-siswa btn-scan" onclick="bukaModeSiswa()">🎓 Saya siswa, mau absen scan QR</button>
+    </div>
+  </div>
+
+  <div id="qr-screen">
+    <h1>📷 Absensi Siswa</h1>
+    <p class="sub">Arahkan kamera ke QR Code kartu siswa kamu.<br>Absen dibuka pukul 06.30–07.00.</p>
+    <div id="qr-reader"></div>
+    <div class="qr-status" id="qr-status"></div>
+    <div class="qr-back">
+      <button class="link-siswa" onclick="tutupModeSiswa()">← Kembali ke Login Guru</button>
+    </div>
+  </div>
+
+  <div id="app-content" class="wrap">
+    <div class="topbar">
+      <h1>🗓️ Absensi Siswa</h1>
+      <span class="user-badge" id="user-badge">–</span><button class="btn-logout" onclick="doLogout()">Keluar</button>
+    </div>
+
+    <nav class="app-nav"><a class="app-nav-link" href="input-nilai.html">📝 Input Nilai</a><a
+        class="app-nav-link active" href="absensi-siswa.html">🗓️ Absensi</a><a class="app-nav-link"
+        href="rekap-nilai.html">📊 Rekap Nilai</a></nav>
     <div class="card">
-      <label>Email</label>
-      <input type="text" id="login-email" placeholder="guru@sekolah.id" style="margin-bottom:12px">
-      <label>Kata Sandi</label>
-      <input type="text" id="login-pass" placeholder="••••••" style="margin-bottom:16px">
-      <button class="btn btn-prim" style="width:100%" onclick="doLogin()">Masuk</button>
-    </div>
-    <button class="link-siswa" onclick="bukaModeSiswa()">🎓 Saya siswa, mau absen scan QR</button>
-  </div>
-</div>
-
-<div id="qr-screen">
-  <h1>📷 Absensi Siswa</h1>
-  <p class="sub">Arahkan kamera ke QR Code kartu siswa kamu.<br>Absen dibuka pukul 06.30–07.00.</p>
-  <div id="qr-reader"></div>
-  <div class="qr-status" id="qr-status"></div>
-  <div class="qr-back">
-    <button class="link-siswa" onclick="tutupModeSiswa()">← Kembali ke Login Guru</button>
-  </div>
-</div>
-
-<div id="app-content" class="wrap">
-  <div class="topbar">
-    <h1>🗓️ Absensi Siswa</h1>
-    <span class="user-badge" id="user-badge">–</span><button class="btn-logout" onclick="doLogout()">Keluar</button>
-  </div>
-
-  <nav class="app-nav"><a class="app-nav-link" href="input-nilai.html">📝 Input Nilai</a><a class="app-nav-link active" href="absensi-siswa.html">🗓️ Absensi</a><a class="app-nav-link" href="rekap-nilai.html">📊 Rekap Nilai</a></nav>
-  <div class="card">
-    <h2>Pilih Kelas &amp; Tanggal</h2>
-    <div class="row">
-      <div>
-        <label>Tahun Ajaran</label>
-        <input type="text" id="sel-tahun" value="2025/2026">
-      </div>
-      <div>
-        <label>Kelas</label>
-        <select id="sel-kelas" onchange="muatAbsensi()">
-          <option value="">— Pilih Kelas —</option>
-          <option>1A</option><option>1B</option><option>2A</option><option>2B</option>
-          <option>3A</option><option>3B</option><option>4A</option><option>4B</option>
-          <option>5A</option><option>5B</option><option>6A</option><option>6B</option>
-        </select>
-      </div>
-      <div>
-        <label>Tanggal</label>
-        <input type="date" id="sel-tanggal" onchange="muatAbsensi()">
+      <h2>Pilih Kelas &amp; Tanggal</h2>
+      <div class="row">
+        <div>
+          <label>Tahun Ajaran</label>
+          <input type="text" id="sel-tahun" value="2025/2026">
+        </div>
+        <div>
+          <label>Kelas</label>
+          <select id="sel-kelas" onchange="muatAbsensi()">
+            <option value="">— Pilih Kelas —</option>
+            <option>1A</option>
+            <option>1B</option>
+            <option>2A</option>
+            <option>2B</option>
+            <option>3A</option>
+            <option>3B</option>
+            <option>4A</option>
+            <option>4B</option>
+            <option>5A</option>
+            <option>5B</option>
+            <option>6A</option>
+            <option>6B</option>
+          </select>
+        </div>
+        <div>
+          <label>Tanggal</label>
+          <input type="date" id="sel-tanggal" onchange="muatAbsensi()">
+        </div>
       </div>
     </div>
+
+    <div class="card" id="siswa-card">
+      <h2>Daftar Kehadiran</h2>
+      <div class="quick-actions">
+        <button class="btn-quick" onclick="tandaiSemua('H')">✅ Tandai semua Hadir</button>
+        <button class="btn-quick" onclick="tandaiSemua(null)">↺ Kosongkan semua</button>
+      </div>
+      <div id="daftar-siswa-wrap">
+        <div class="empty">Pilih kelas &amp; tanggal dulu di atas.</div>
+      </div>
+      <div class="legend">
+        <span><i class="dot" style="background:var(--ok)"></i> Hadir</span>
+        <span><i class="dot" style="background:var(--info)"></i> Sakit</span>
+        <span><i class="dot" style="background:var(--warn)"></i> Izin</span>
+        <span><i class="dot" style="background:var(--danger)"></i> Alfa (tanpa keterangan)</span>
+      </div>
+      <div class="summary-bar" id="summary-bar" style="display:none"></div>
+    </div>
+
+    <div style="text-align:right">
+      <button class="btn btn-prim" id="btn-simpan" onclick="simpanAbsensi()" disabled>💾 Simpan Absensi Hari
+        Ini</button>
+    </div>
   </div>
 
-  <div class="card" id="siswa-card">
-    <h2>Daftar Kehadiran</h2>
-    <div class="quick-actions">
-      <button class="btn-quick" onclick="tandaiSemua('H')">✅ Tandai semua Hadir</button>
-      <button class="btn-quick" onclick="tandaiSemua(null)">↺ Kosongkan semua</button>
-    </div>
-    <div id="daftar-siswa-wrap">
-      <div class="empty">Pilih kelas &amp; tanggal dulu di atas.</div>
-    </div>
-    <div class="legend">
-      <span><i class="dot" style="background:var(--ok)"></i> Hadir</span>
-      <span><i class="dot" style="background:var(--info)"></i> Sakit</span>
-      <span><i class="dot" style="background:var(--warn)"></i> Izin</span>
-      <span><i class="dot" style="background:var(--danger)"></i> Alfa (tanpa keterangan)</span>
-    </div>
-    <div class="summary-bar" id="summary-bar" style="display:none"></div>
-  </div>
+  <div class="toast" id="toast"></div>
 
-  <div style="text-align:right">
-    <button class="btn btn-prim" id="btn-simpan" onclick="simpanAbsensi()" disabled>💾 Simpan Absensi Hari Ini</button>
-  </div>
-</div>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, signInAnonymously, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { firebaseConfig } from "./assets/firebase-config.js";
 
-<div class="toast" id="toast"></div>
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import { getAuth, signInWithEmailAndPassword, signInAnonymously, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-  import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-  import { firebaseConfig } from "./assets/firebase-config.js";
+    let currentUserNama = '';
+    let currentSiswaList = [];       // [{uid, nama}]
+    let currentAbsensiState = {};    // {uid: {status:'H'|'S'|'I'|'A', keterangan:''}}
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getDatabase(app);
+    function esc(s) { const d = document.createElement('div'); d.innerText = s ?? ''; return d.innerHTML; }
+    function todayStr() { return new Date().toISOString().slice(0, 10); }
 
-  let currentUserNama = '';
-  let currentSiswaList = [];       // [{uid, nama}]
-  let currentAbsensiState = {};    // {uid: {status:'H'|'S'|'I'|'A', keterangan:''}}
-
-  function esc(s){ const d=document.createElement('div'); d.innerText=s??''; return d.innerHTML; }
-  function todayStr(){ return new Date().toISOString().slice(0,10); }
-
-  function showToast(msg, type='info'){
-    const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.className = `toast show ${type}`;
-    setTimeout(() => t.classList.remove('show'), 2600);
-  }
-
-  window.doLogin = async () => {
-    const email = document.getElementById('login-email').value.trim();
-    const pass = document.getElementById('login-pass').value;
-    if (!email || !pass) { showToast('Isi email & kata sandi', 'warning'); return; }
-    try {
-      await signInWithEmailAndPassword(auth, email, pass);
-    } catch (err) {
-      showToast('❌ Login gagal: periksa email/kata sandi', 'error');
-    }
-  };
-
-  window.doLogout = async () => { await signOut(auth); };
-
-  onAuthStateChanged(auth, async (user) => {
-    document.body.classList.add('auth-ready');
-    if (document.getElementById('qr-screen').style.display === 'block') return; // sedang mode siswa, jangan ganggu
-    if (!user) {
-      document.getElementById('login-screen').style.display = 'block';
-      document.getElementById('app-content').style.display = 'none';
-      return;
-    }
-    const snap = await get(ref(db, `users/${user.uid}`));
-    currentUserNama = snap.exists() ? (snap.val().nama || user.email) : user.email;
-
-    document.getElementById('user-badge').textContent = `👤 ${currentUserNama}`;
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('app-content').style.display = 'block';
-    document.getElementById('sel-tanggal').value = todayStr();
-  });
-
-  // ══ MUAT DATA SAAT KELAS/TANGGAL DIPILIH ══
-  window.muatAbsensi = async () => {
-    const kelas = document.getElementById('sel-kelas').value;
-    const tanggal = document.getElementById('sel-tanggal').value;
-    const wrap = document.getElementById('daftar-siswa-wrap');
-    const btnSimpan = document.getElementById('btn-simpan');
-    const summaryBar = document.getElementById('summary-bar');
-
-    if (!kelas || !tanggal) {
-      wrap.innerHTML = '<div class="empty">Pilih kelas &amp; tanggal dulu di atas.</div>';
-      btnSimpan.disabled = true;
-      summaryBar.style.display = 'none';
-      return;
+    function showToast(msg, type = 'info') {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = `toast show ${type}`;
+      setTimeout(() => t.classList.remove('show'), 2600);
     }
 
-    wrap.innerHTML = '<div class="empty">Memuat data…</div>';
+    window.doLogin = async () => {
+      const email = document.getElementById('login-email').value.trim();
+      const pass = document.getElementById('login-pass').value;
+      if (!email || !pass) { showToast('Isi email & kata sandi', 'warning'); return; }
+      try {
+        await signInWithEmailAndPassword(auth, email, pass);
+      } catch (err) {
+        showToast('❌ Login gagal: periksa email/kata sandi', 'error');
+      }
+    };
 
-    // 1. Daftar siswa kelas ini (sumber sama dengan halaman input nilai)
-    const siswaSnap = await get(ref(db, `siswa/${kelas}`));
-    currentSiswaList = [];
-    if (siswaSnap.exists()) {
-      siswaSnap.forEach(c => currentSiswaList.push({ uid: c.key, nama: c.val().nama }));
-      currentSiswaList.sort((a, b) => a.nama.localeCompare(b.nama));
-    }
+    window.doLogout = async () => { await signOut(auth); };
 
-    if (currentSiswaList.length === 0) {
-      wrap.innerHTML = '<div class="empty">Belum ada siswa di kelas ini. Tambahkan dulu lewat halaman Input Nilai.</div>';
-      btnSimpan.disabled = true;
-      summaryBar.style.display = 'none';
-      return;
-    }
+    onAuthStateChanged(auth, async (user) => {
+      document.body.classList.add('auth-ready');
+      if (document.getElementById('qr-screen').style.display === 'block') return; // sedang mode siswa, jangan ganggu
+      if (!user) {
+        document.getElementById('login-screen').style.display = 'block';
+        document.getElementById('app-content').style.display = 'none';
+        return;
+      }
+      const snap = await get(ref(db, `users/${user.uid}`));
+      currentUserNama = snap.exists() ? (snap.val().nama || user.email) : user.email;
 
-    // 2. Absensi yang sudah tersimpan hari itu (kalau ada, guru buka ulang halaman)
-    const tahun = document.getElementById('sel-tahun').value.trim() || '2025/2026';
-    currentAbsensiState = {};
-    const absenSnap = await get(ref(db, `absensi_siswa/${tahun}/${kelas}/${tanggal}`));
-    if (absenSnap.exists()) {
-      absenSnap.forEach(c => { currentAbsensiState[c.key] = c.val(); });
-    }
+      document.getElementById('user-badge').textContent = `👤 ${currentUserNama}`;
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app-content').style.display = 'block';
+      document.getElementById('sel-tanggal').value = todayStr();
+    });
 
-    renderDaftarSiswa();
-    btnSimpan.disabled = false;
-  };
+    // ══ MUAT DATA SAAT KELAS/TANGGAL DIPILIH ══
+    window.muatAbsensi = async () => {
+      const kelas = document.getElementById('sel-kelas').value;
+      const tanggal = document.getElementById('sel-tanggal').value;
+      const wrap = document.getElementById('daftar-siswa-wrap');
+      const btnSimpan = document.getElementById('btn-simpan');
+      const summaryBar = document.getElementById('summary-bar');
 
-  function renderDaftarSiswa() {
-    const wrap = document.getElementById('daftar-siswa-wrap');
-    const rows = currentSiswaList.map(s => {
-      const state = currentAbsensiState[s.uid] || {};
-      const statusBtns = ['H','S','I','A'].map(st =>
-        `<button class="status-btn ${state.status===st?'active':''}" data-s="${st}"
+      if (!kelas || !tanggal) {
+        wrap.innerHTML = '<div class="empty">Pilih kelas &amp; tanggal dulu di atas.</div>';
+        btnSimpan.disabled = true;
+        summaryBar.style.display = 'none';
+        return;
+      }
+
+      wrap.innerHTML = '<div class="empty">Memuat data…</div>';
+
+      // 1. Daftar siswa kelas ini (sumber sama dengan halaman input nilai)
+      const siswaSnap = await get(ref(db, `siswa/${kelas}`));
+      currentSiswaList = [];
+      if (siswaSnap.exists()) {
+        siswaSnap.forEach(c => currentSiswaList.push({ uid: c.key, nama: c.val().nama }));
+        currentSiswaList.sort((a, b) => a.nama.localeCompare(b.nama));
+      }
+
+      if (currentSiswaList.length === 0) {
+        wrap.innerHTML = '<div class="empty">Belum ada siswa di kelas ini. Tambahkan dulu lewat halaman Input Nilai.</div>';
+        btnSimpan.disabled = true;
+        summaryBar.style.display = 'none';
+        return;
+      }
+
+      // 2. Absensi yang sudah tersimpan hari itu (kalau ada, guru buka ulang halaman)
+      const tahun = document.getElementById('sel-tahun').value.trim() || '2025/2026';
+      currentAbsensiState = {};
+      const absenSnap = await get(ref(db, `absensi_siswa/${tahun}/${kelas}/${tanggal}`));
+      if (absenSnap.exists()) {
+        absenSnap.forEach(c => { currentAbsensiState[c.key] = c.val(); });
+      }
+
+      renderDaftarSiswa();
+      btnSimpan.disabled = false;
+    };
+
+    function renderDaftarSiswa() {
+      const wrap = document.getElementById('daftar-siswa-wrap');
+      const rows = currentSiswaList.map(s => {
+        const state = currentAbsensiState[s.uid] || {};
+        const statusBtns = ['H', 'S', 'I', 'A'].map(st =>
+          `<button class="status-btn ${state.status === st ? 'active' : ''}" data-s="${st}"
             onclick="setStatus('${s.uid}','${st}')">${st}</button>`
-      ).join('');
-      return `
+        ).join('');
+        return `
         <div class="siswa-row" data-uid="${s.uid}">
           <span class="siswa-nama">${esc(s.nama)}</span>
           <input type="text" class="ket-input" placeholder="Keterangan (opsional)"
@@ -274,194 +642,195 @@
                  oninput="setKeterangan('${s.uid}', this.value)">
           <div class="status-group">${statusBtns}</div>
         </div>`;
-    }).join('');
-    wrap.innerHTML = rows;
-    updateSummary();
-  }
+      }).join('');
+      wrap.innerHTML = rows;
+      updateSummary();
+    }
 
-  window.setStatus = (uid, status) => {
-    if (!currentAbsensiState[uid]) currentAbsensiState[uid] = {};
-    // Toggle: klik status yang sama lagi -> kosongkan
-    currentAbsensiState[uid].status = (currentAbsensiState[uid].status === status) ? null : status;
-    renderDaftarSiswa();
-  };
+    window.setStatus = (uid, status) => {
+      if (!currentAbsensiState[uid]) currentAbsensiState[uid] = {};
+      // Toggle: klik status yang sama lagi -> kosongkan
+      currentAbsensiState[uid].status = (currentAbsensiState[uid].status === status) ? null : status;
+      renderDaftarSiswa();
+    };
 
-  window.setKeterangan = (uid, val) => {
-    if (!currentAbsensiState[uid]) currentAbsensiState[uid] = {};
-    currentAbsensiState[uid].keterangan = val;
-  };
+    window.setKeterangan = (uid, val) => {
+      if (!currentAbsensiState[uid]) currentAbsensiState[uid] = {};
+      currentAbsensiState[uid].keterangan = val;
+    };
 
-  window.tandaiSemua = (status) => {
-    currentSiswaList.forEach(s => {
-      if (!currentAbsensiState[s.uid]) currentAbsensiState[s.uid] = {};
-      currentAbsensiState[s.uid].status = status;
-      if (!status) currentAbsensiState[s.uid].keterangan = '';
-    });
-    renderDaftarSiswa();
-  };
+    window.tandaiSemua = (status) => {
+      currentSiswaList.forEach(s => {
+        if (!currentAbsensiState[s.uid]) currentAbsensiState[s.uid] = {};
+        currentAbsensiState[s.uid].status = status;
+        if (!status) currentAbsensiState[s.uid].keterangan = '';
+      });
+      renderDaftarSiswa();
+    };
 
-  function updateSummary() {
-    const counts = { H: 0, S: 0, I: 0, A: 0, kosong: 0 };
-    currentSiswaList.forEach(s => {
-      const st = currentAbsensiState[s.uid]?.status;
-      if (st) counts[st]++; else counts.kosong++;
-    });
-    const bar = document.getElementById('summary-bar');
-    bar.style.display = 'flex';
-    bar.innerHTML = `
+    function updateSummary() {
+      const counts = { H: 0, S: 0, I: 0, A: 0, kosong: 0 };
+      currentSiswaList.forEach(s => {
+        const st = currentAbsensiState[s.uid]?.status;
+        if (st) counts[st]++; else counts.kosong++;
+      });
+      const bar = document.getElementById('summary-bar');
+      bar.style.display = 'flex';
+      bar.innerHTML = `
       <span><b>${counts.H}</b> Hadir</span>
       <span><b>${counts.S}</b> Sakit</span>
       <span><b>${counts.I}</b> Izin</span>
       <span><b>${counts.A}</b> Alfa</span>
       <span style="color:var(--t3)"><b>${counts.kosong}</b> belum ditandai</span>`;
-  }
-
-  // ══ SIMPAN ══
-  window.simpanAbsensi = async () => {
-    const kelas = document.getElementById('sel-kelas').value;
-    const tanggal = document.getElementById('sel-tanggal').value;
-    const tahun = document.getElementById('sel-tahun').value.trim();
-
-    const belumDitandai = currentSiswaList.filter(s => !currentAbsensiState[s.uid]?.status);
-    if (belumDitandai.length > 0) {
-      const lanjut = confirm(`${belumDitandai.length} siswa belum ditandai statusnya. Simpan tetap lanjut (siswa yang belum ditandai tidak akan tercatat)?`);
-      if (!lanjut) return;
     }
 
-    try {
-      const writes = currentSiswaList
-        .filter(s => currentAbsensiState[s.uid]?.status)
-        .map(s => set(
-          ref(db, `absensi_siswa/${tahun}/${kelas}/${tanggal}/${s.uid}`),
-          {
-            status: currentAbsensiState[s.uid].status,
-            keterangan: currentAbsensiState[s.uid].keterangan || '',
-            dicatatOleh: currentUserNama,
-            dicatatPada: Date.now()
-          }
-        ));
-      await Promise.all(writes);
-      showToast(`✅ Absensi ${tanggal} tersimpan (${writes.length} siswa)`, 'success');
-    } catch (err) {
-      showToast('❌ Gagal menyimpan: ' + err.message, 'error');
-    }
-  };
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js').catch(() => {});
-  }
+    // ══ SIMPAN ══
+    window.simpanAbsensi = async () => {
+      const kelas = document.getElementById('sel-kelas').value;
+      const tanggal = document.getElementById('sel-tanggal').value;
+      const tahun = document.getElementById('sel-tahun').value.trim();
 
-  // ══════════ MODE SISWA: SCAN QR ABSENSI ══════════
-  let qrScanner = null;
-  let qrBusy = false; // cegah scan ganda beruntun saat masih memproses
-
-  function jamSekarangValid() {
-    const now = new Date();
-    const menit = now.getHours() * 60 + now.getMinutes();
-    return menit >= (6 * 60 + 30) && menit <= (7 * 60); // 06:30–07:00
-  }
-
-  function tampilStatus(msg, jenis) {
-    const el = document.getElementById('qr-status');
-    el.textContent = msg;
-    el.className = `qr-status ${jenis}`;
-  }
-
-  window.bukaModeSiswa = async () => {
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('app-content').style.display = 'none';
-    document.getElementById('qr-screen').style.display = 'block';
-
-    if (!jamSekarangValid()) {
-      tampilStatus('⏰ Absensi hanya dibuka pukul 06.30–07.00. Silakan datang lagi besok pagi.', 'err');
-      return;
-    }
-
-    tampilStatus('🔐 Menyiapkan sesi…', 'info');
-    try {
-      await signInAnonymously(auth);
-    } catch (err) {
-      tampilStatus('❌ Gagal menyiapkan sesi. Coba muat ulang halaman.', 'err');
-      return;
-    }
-
-    tampilStatus('📷 Arahkan kamera ke QR Code', 'info');
-    qrScanner = new Html5Qrcode('qr-reader');
-    try {
-      await qrScanner.start(
-        { facingMode: 'environment' },
-        { fps: 10, qrbox: { width: 240, height: 240 } },
-        onScanSukses,
-        () => {} // abaikan frame yang belum terbaca
-      );
-    } catch (err) {
-      tampilStatus('❌ Tidak bisa mengakses kamera. Pastikan izin kamera diaktifkan.', 'err');
-    }
-  };
-
-  window.tutupModeSiswa = async () => {
-    if (qrScanner) { try { await qrScanner.stop(); qrScanner.clear(); } catch (e) {} qrScanner = null; }
-    document.getElementById('qr-screen').style.display = 'none';
-    document.getElementById('qr-status').className = 'qr-status';
-    document.getElementById('login-screen').style.display = 'block';
-  };
-
-  async function onScanSukses(nisnHasilScan) {
-    if (qrBusy) return;
-    const nisn = String(nisnHasilScan).trim();
-    if (!/^\d{5,15}$/.test(nisn)) return; // bukan QR NISN yang valid, abaikan diam-diam
-
-    qrBusy = true;
-    if (qrScanner) { try { await qrScanner.pause(true); } catch (e) {} }
-    tampilStatus('⏳ Memeriksa data…', 'info');
-
-    if (!jamSekarangValid()) {
-      tampilStatus('⏰ Waktu absensi sudah lewat (06.30–07.00).', 'err');
-      qrBusy = false;
-      return;
-    }
-
-    try {
-      const idxSnap = await get(ref(db, `siswa_by_nisn/${nisn}`));
-      if (!idxSnap.exists()) {
-        tampilStatus('❌ NISN tidak terdaftar. Hubungi wali kelas.', 'err');
-        siapScanLagi();
-        return;
+      const belumDitandai = currentSiswaList.filter(s => !currentAbsensiState[s.uid]?.status);
+      if (belumDitandai.length > 0) {
+        const lanjut = confirm(`${belumDitandai.length} siswa belum ditandai statusnya. Simpan tetap lanjut (siswa yang belum ditandai tidak akan tercatat)?`);
+        if (!lanjut) return;
       }
-      const { kelas, uid, nama } = idxSnap.val();
-      const tahun = '2025/2026'; // sesuaikan bila tahun ajaran berganti
-      const tanggal = new Date().toISOString().slice(0, 10);
-      const pathAbsen = `absensi_siswa/${tahun}/${kelas}/${tanggal}/${uid}`;
 
-      const cekSnap = await get(ref(db, pathAbsen));
-      if (cekSnap.exists()) {
-        tampilStatus(`⚠️ ${nama} sudah absen hari ini.`, 'err');
-        siapScanLagi();
+      try {
+        const writes = currentSiswaList
+          .filter(s => currentAbsensiState[s.uid]?.status)
+          .map(s => set(
+            ref(db, `absensi_siswa/${tahun}/${kelas}/${tanggal}/${s.uid}`),
+            {
+              status: currentAbsensiState[s.uid].status,
+              keterangan: currentAbsensiState[s.uid].keterangan || '',
+              dicatatOleh: currentUserNama,
+              dicatatPada: Date.now()
+            }
+          ));
+        await Promise.all(writes);
+        showToast(`✅ Absensi ${tanggal} tersimpan (${writes.length} siswa)`, 'success');
+      } catch (err) {
+        showToast('❌ Gagal menyimpan: ' + err.message, 'error');
+      }
+    };
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js').catch(() => { });
+    }
+
+    // ══════════ MODE SISWA: SCAN QR ABSENSI ══════════
+    let qrScanner = null;
+    let qrBusy = false; // cegah scan ganda beruntun saat masih memproses
+
+    function jamSekarangValid() {
+      const now = new Date();
+      const menit = now.getHours() * 60 + now.getMinutes();
+      return menit >= (6 * 60 + 30) && menit <= (7 * 60); // 06:30–07:00
+    }
+
+    function tampilStatus(msg, jenis) {
+      const el = document.getElementById('qr-status');
+      el.textContent = msg;
+      el.className = `qr-status ${jenis}`;
+    }
+
+    window.bukaModeSiswa = async () => {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app-content').style.display = 'none';
+      document.getElementById('qr-screen').style.display = 'block';
+
+      if (!jamSekarangValid()) {
+        tampilStatus('⏰ Absensi hanya dibuka pukul 06.30–07.00. Silakan datang lagi besok pagi.', 'err');
         return;
       }
 
-      await set(ref(db, pathAbsen), {
-        status: 'H',
-        keterangan: 'Absen mandiri via QR',
-        dicatatOleh: 'QR Mandiri',
-        waktu: Date.now()
-      });
+      tampilStatus('🔐 Menyiapkan sesi…', 'info');
+      try {
+        await signInAnonymously(auth);
+      } catch (err) {
+        tampilStatus('❌ Gagal menyiapkan sesi. Coba muat ulang halaman.', 'err');
+        return;
+      }
 
-      tampilStatus(`✅ Absen berhasil, ${nama}!`, 'ok');
-      siapScanLagi();
-    } catch (err) {
-      tampilStatus('❌ Gagal menyimpan absen: ' + err.message, 'err');
-      siapScanLagi();
+      tampilStatus('📷 Arahkan kamera ke QR Code', 'info');
+      qrScanner = new Html5Qrcode('qr-reader');
+      try {
+        await qrScanner.start(
+          { facingMode: 'environment' },
+          { fps: 10, qrbox: { width: 240, height: 240 } },
+          onScanSukses,
+          () => { } // abaikan frame yang belum terbaca
+        );
+      } catch (err) {
+        tampilStatus('❌ Tidak bisa mengakses kamera. Pastikan izin kamera diaktifkan.', 'err');
+      }
+    };
+
+    window.tutupModeSiswa = async () => {
+      if (qrScanner) { try { await qrScanner.stop(); qrScanner.clear(); } catch (e) { } qrScanner = null; }
+      document.getElementById('qr-screen').style.display = 'none';
+      document.getElementById('qr-status').className = 'qr-status';
+      document.getElementById('login-screen').style.display = 'block';
+    };
+
+    async function onScanSukses(nisnHasilScan) {
+      if (qrBusy) return;
+      const nisn = String(nisnHasilScan).trim();
+      if (!/^\d{5,15}$/.test(nisn)) return; // bukan QR NISN yang valid, abaikan diam-diam
+
+      qrBusy = true;
+      if (qrScanner) { try { await qrScanner.pause(true); } catch (e) { } }
+      tampilStatus('⏳ Memeriksa data…', 'info');
+
+      if (!jamSekarangValid()) {
+        tampilStatus('⏰ Waktu absensi sudah lewat (06.30–07.00).', 'err');
+        qrBusy = false;
+        return;
+      }
+
+      try {
+        const idxSnap = await get(ref(db, `siswa_by_nisn/${nisn}`));
+        if (!idxSnap.exists()) {
+          tampilStatus('❌ NISN tidak terdaftar. Hubungi wali kelas.', 'err');
+          siapScanLagi();
+          return;
+        }
+        const { kelas, uid, nama } = idxSnap.val();
+        const tahun = '2025/2026'; // sesuaikan bila tahun ajaran berganti
+        const tanggal = new Date().toISOString().slice(0, 10);
+        const pathAbsen = `absensi_siswa/${tahun}/${kelas}/${tanggal}/${uid}`;
+
+        const cekSnap = await get(ref(db, pathAbsen));
+        if (cekSnap.exists()) {
+          tampilStatus(`⚠️ ${nama} sudah absen hari ini.`, 'err');
+          siapScanLagi();
+          return;
+        }
+
+        await set(ref(db, pathAbsen), {
+          status: 'H',
+          keterangan: 'Absen mandiri via QR',
+          dicatatOleh: 'QR Mandiri',
+          waktu: Date.now()
+        });
+
+        tampilStatus(`✅ Absen berhasil, ${nama}!`, 'ok');
+        siapScanLagi();
+      } catch (err) {
+        tampilStatus('❌ Gagal menyimpan absen: ' + err.message, 'err');
+        siapScanLagi();
+      }
     }
-  }
 
-  function siapScanLagi() {
-    // Beri jeda 2.5 detik agar siswa sempat baca status, lalu otomatis siap scan siswa berikutnya
-    setTimeout(async () => {
-      qrBusy = false;
-      if (qrScanner) { try { await qrScanner.resume(); } catch (e) {} }
-      if (jamSekarangValid()) tampilStatus('📷 Arahkan kamera ke QR Code siswa berikutnya', 'info');
-    }, 2500);
-  }
-</script>
+    function siapScanLagi() {
+      // Beri jeda 2.5 detik agar siswa sempat baca status, lalu otomatis siap scan siswa berikutnya
+      setTimeout(async () => {
+        qrBusy = false;
+        if (qrScanner) { try { await qrScanner.resume(); } catch (e) { } }
+        if (jamSekarangValid()) tampilStatus('📷 Arahkan kamera ke QR Code siswa berikutnya', 'info');
+      }, 2500);
+    }
+  </script>
 </body>
+
 </html>
