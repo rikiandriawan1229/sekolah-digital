@@ -359,7 +359,8 @@
       border-radius: var(--radius);
       font-size: 14px;
       font-weight: 700;
-      display: none
+      display: none;
+      white-space:pre-line
     }
 
     .qr-status.ok {
@@ -740,7 +741,7 @@
       document.getElementById('qr-screen').style.display = 'block';
 
       if (!jamSekarangValid()) {
-        tampilStatus('⏰ Absensi hanya dibuka pukul 06.30–07.00. Silakan datang lagi besok pagi.', 'err');
+        tampilStatus('⏰ Absensi hanya dibuka pukul 06.30–07.00\nSilakan melapor ke wali kelas.', 'err');
         return;
       }
 
@@ -783,7 +784,7 @@
       tampilStatus('⏳ Memeriksa data…', 'info');
 
       if (!jamSekarangValid()) {
-        tampilStatus('⏰ Waktu absensi sudah lewat (06.30–07.00).', 'err');
+        tampilStatus('⏰ Absensi hanya dibuka pukul 06.30–07.00\nSilakan melapor ke wali kelas.', 'err');
         qrBusy = false;
         return;
       }
