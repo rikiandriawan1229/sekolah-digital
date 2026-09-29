@@ -710,6 +710,7 @@
       navigator.serviceWorker.register('./sw.js').catch(() => { });
     }
 
+<<<<<<< HEAD
     // ══════════ SESI ABSEN & KARTU QR ══════════
     window.simpanTahun = async () => {
       const t = document.getElementById('sel-tahun').value.trim();
@@ -717,6 +718,54 @@
       await set(ref(db, 'pengaturan/tahunAjaran'), t);
       showToast('✅ Tahun ajaran disimpan', 'success');
       muatAbsensi();
+=======
+    // ══════════ MODE SISWA: SCAN QR ABSENSI ══════════
+    let qrScanner = null;
+    let qrBusy = false; // cegah scan ganda beruntun saat masih memproses
+
+    function jamSekarangValid() {
+      const now = new Date();
+      const menit = now.getHours() * 60 + now.getMinutes();
+      return menit >= (6 * 60 + 30) && menit <= (7 * 60); // 06:30–07:00
+    }
+
+    function tampilStatus(msg, jenis) {
+      const el = document.getElementById('qr-status');
+      el.textContent = msg;
+      el.className = `qr-status ${jenis}`;
+    }
+
+    window.bukaModeSiswa = async () => {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app-content').style.display = 'none';
+      document.getElementById('qr-screen').style.display = 'block';
+
+      if (!jamSekarangValid()) {
+        tampilStatus('⏰ Absensi hanya dibuka pukul 06.30–07.00\nSilakan melapor ke wali kelas.', 'err');
+        return;
+      }
+
+      tampilStatus('🔐 Menyiapkan sesi…', 'info');
+      try {
+        await signInAnonymously(auth);
+      } catch (err) {
+        tampilStatus('❌ Gagal menyiapkan sesi. Coba muat ulang halaman.', 'err');
+        return;
+      }
+
+      tampilStatus('📷 Arahkan kamera ke QR Code', 'info');
+      qrScanner = new Html5Qrcode('qr-reader');
+      try {
+        await qrScanner.start(
+          { facingMode: 'environment' },
+          { fps: 10, qrbox: { width: 240, height: 240 } },
+          onScanSukses,
+          () => { } // abaikan frame yang belum terbaca
+        );
+      } catch (err) {
+        tampilStatus('❌ Tidak bisa mengakses kamera. Pastikan izin kamera diaktifkan.', 'err');
+      }
+>>>>>>> 3ce652f67ad282d13d3d1b751f7627cbb6ec367b
     };
 
     const fmtJam = ms => new Date(ms).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
@@ -753,10 +802,55 @@
       muatAbsensi();
     };
 
+<<<<<<< HEAD
     function buatToken() {
       const abc = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789', a = new Uint32Array(12);
       crypto.getRandomValues(a);
       return Array.from(a, n => abc[n % abc.length]).join('');
+=======
+      qrBusy = true;
+      if (qrScanner) { try { await qrScanner.pause(true); } catch (e) { } }
+      tampilStatus('⏳ Memeriksa data…', 'info');
+
+      if (!jamSekarangValid()) {
+        tampilStatus('⏰ Absensi hanya dibuka pukul 06.30–07.00\nSilakan melapor ke wali kelas.', 'err');
+        qrBusy = false;
+        return;
+      }
+
+      try {
+        const idxSnap = await get(ref(db, `siswa_by_nisn/${nisn}`));
+        if (!idxSnap.exists()) {
+          tampilStatus('❌ NISN tidak terdaftar. Hubungi wali kelas.', 'err');
+          siapScanLagi();
+          return;
+        }
+        const { kelas, uid, nama } = idxSnap.val();
+        const tahun = '2025/2026'; // sesuaikan bila tahun ajaran berganti
+        const tanggal = new Date().toISOString().slice(0, 10);
+        const pathAbsen = `absensi_siswa/${tahun}/${kelas}/${tanggal}/${uid}`;
+
+        const cekSnap = await get(ref(db, pathAbsen));
+        if (cekSnap.exists()) {
+          tampilStatus(`⚠️ ${nama} sudah absen hari ini.`, 'err');
+          siapScanLagi();
+          return;
+        }
+
+        await set(ref(db, pathAbsen), {
+          status: 'H',
+          keterangan: 'Absen mandiri via QR',
+          dicatatOleh: 'QR Mandiri',
+          waktu: Date.now()
+        });
+
+        tampilStatus(`✅ Absen berhasil, ${nama}!`, 'ok');
+        siapScanLagi();
+      } catch (err) {
+        tampilStatus('❌ Gagal menyimpan absen: ' + err.message, 'err');
+        siapScanLagi();
+      }
+>>>>>>> 3ce652f67ad282d13d3d1b751f7627cbb6ec367b
     }
 
     window.cetakKartu = async () => {
