@@ -79,7 +79,7 @@
       <label>Email</label>
       <input type="text" id="login-email" placeholder="guru@sekolah.id" style="margin-bottom:12px">
       <label>Kata Sandi</label>
-      <input type="text" id="login-pass" placeholder="••••••" style="margin-bottom:16px">
+      <input type="password" id="login-pass" placeholder="••••••" style="margin-bottom:16px">
       <button class="btn btn-prim" style="width:100%" onclick="doLogin()">Masuk</button>
     </div>
   </div>
@@ -156,6 +156,7 @@
   <div class="modal-box">
     <h3>📥 Import Nilai dari Excel</h3>
     <p class="hint">Gunakan template resmi (kolom: Tahun Ajaran, Semester, Kelas, NISN, Nama Siswa, Mata Pelajaran, Nilai). Baris dengan data tidak valid akan dilewati dan ditampilkan di log.</p>
+    <button class="btn btn-sec" style="margin-bottom:10px" onclick="unduhTemplate()">⬇️ Unduh Template Excel</button><br>
     <input type="file" id="file-import" accept=".xlsx,.xls">
     <div class="import-log" id="import-log" style="display:none"></div>
     <div class="modal-actions">
@@ -168,14 +169,8 @@
 <div class="toast" id="toast"></div>
 
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
   import { getDatabase, ref, get, set, push, child } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-  import { firebaseConfig } from "./assets/firebase-config.js";
-
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getDatabase(app);
+  import { db, initGuru } from "./assets/auth.js";
 
   let currentUserNama = '';
   let currentSiswaList = [];   // [{uid, nama}]
@@ -191,34 +186,7 @@
     setTimeout(() => t.classList.remove('show'), 2600);
   }
 
-  window.doLogin = async () => {
-    const email = document.getElementById('login-email').value.trim();
-    const pass = document.getElementById('login-pass').value;
-    if (!email || !pass) { showToast('Isi email & kata sandi', 'warning'); return; }
-    try {
-      await signInWithEmailAndPassword(auth, email, pass);
-    } catch (err) {
-      showToast('❌ Login gagal: periksa email/kata sandi', 'error');
-    }
-  };
-
-  window.doLogout = async () => { await signOut(auth); };
-
-  onAuthStateChanged(auth, async (user) => {
-    document.body.classList.add('auth-ready');
-    if (!user) {
-      document.getElementById('login-screen').style.display = 'block';
-      document.getElementById('app-content').style.display = 'none';
-      return;
-    }
-    // Ambil profil guru dari users/{uid} (path sederhana, sesuaikan kalau perlu)
-    const snap = await get(ref(db, `users/${user.uid}`));
-    currentUserNama = snap.exists() ? (snap.val().nama || user.email) : user.email;
-
-    document.getElementById('user-badge').textContent = `👤 ${currentUserNama}`;
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('app-content').style.display = 'block';
-  });
+  initGuru({ halaman: 'nilai', onReady: async (p) => { currentUserNama = p.nama; } });
 
   // ══ SAAT KELAS / MAPEL DIPILIH ══
   window.onKontekChange = async () => {
@@ -317,6 +285,31 @@
   // ══ IMPORT EXCEL ══
   const MAPEL_VALID_CHARS = /^[^.#$\[\]\/]+$/; // tolak karakter terlarang path Firebase
   const KELAS_VALID = ['1A','1B','2A','2B','3A','3B','4A','4B','5A','5B','6A','6B'];
+
+  window.unduhTemplate = () => {
+    const kls = document.getElementById('sel-kelas').value || '4A';
+    const thn = '2025/2026';
+    const contoh = [
+      { 'Tahun Ajaran': thn, 'Semester': 'Ganjil', 'Kelas': kls, 'NISN': '0123456789', 'Nama Siswa': 'Contoh Siswa Satu', 'Mata Pelajaran': 'PJOK', 'Nilai': 85 },
+      { 'Tahun Ajaran': thn, 'Semester': 'Ganjil', 'Kelas': kls, 'NISN': '0123456790', 'Nama Siswa': 'Contoh Siswa Dua', 'Mata Pelajaran': 'PJOK', 'Nilai': 78 }
+    ];
+    const petunjuk = [
+      ['PETUNJUK PENGISIAN'],
+      ['1. Satu baris = satu nilai satu siswa untuk satu mata pelajaran.'],
+      ['2. Tahun Ajaran format 2025/2026. Semester: Ganjil atau Genap.'],
+      ['3. Kelas: 1A-6B. NISN: angka 5-15 digit (isi sebagai teks agar angka 0 di depan tidak hilang).'],
+      ['4. Mata Pelajaran: Bahasa Indonesia, Pend. Pancasila (PKN), Matematika, IPAS, Seni Rupa, PAI, PJOK, Bahasa Inggris.'],
+      ['5. Nilai 0-100. Hapus dua baris contoh sebelum mengunggah.']
+    ];
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(contoh);
+    ws['!cols'] = [14, 10, 8, 16, 26, 26, 8].map(w => ({ wch: w }));
+    // paksa kolom NISN bertipe teks
+    for (const a of ['D2', 'D3']) if (ws[a]) ws[a].t = 's';
+    XLSX.utils.book_append_sheet(wb, ws, 'Data Nilai');
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(petunjuk), 'Petunjuk');
+    XLSX.writeFile(wb, 'Template-Import-Nilai.xlsx');
+  };
 
   window.prosesImportExcel = async () => {
     const fileInput = document.getElementById('file-import');

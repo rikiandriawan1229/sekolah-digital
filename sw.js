@@ -8,13 +8,15 @@
 // penuh. Semua request ke Firebase/Google selalu lewat network.
 // ============================================================
 
-const CACHE_NAME = 'oneapp-shell-v1';
+const CACHE_NAME = 'oneapp-shell-v4';
 const SHELL_FILES = [
   './index.html',
   './input-nilai.html',
   './absensi-siswa.html',
+  './siswa.html',
   './rekap-nilai.html',
   './assets/firebase-config.js',
+  './assets/auth.js',
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png'

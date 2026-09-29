@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#4F46E5">
+<link rel="icon" href="icons/icon-192.png">
+<title>Absen Siswa</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+<style>
+  :root{--p1:#6C63FF;--p2:#4F46E5;--ok:#10B981;--danger:#EF4444;--bg:#F5F6F8;--t1:#0F172A;--t2:#475569;--border:#E2E0FF}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--t1);min-height:100vh;padding:24px 16px}
+  .wrap{max-width:420px;margin:0 auto;text-align:center}
+  h1{font-size:20px;font-weight:800;margin-bottom:6px}
+  .sub{font-size:13px;color:var(--t2);margin-bottom:18px}
+  #qr-reader{border-radius:14px;overflow:hidden;border:1px solid var(--border);background:#fff}
+  .st{margin-top:18px;padding:16px;border-radius:14px;font-size:14px;font-weight:700;white-space:pre-line}
+  .ok{background:#E7F8F1;color:var(--ok)}.err{background:#FEF2F2;color:var(--danger)}.info{background:#EEF2FF;color:var(--p2)}
+  .btn{margin-top:14px;border:0;border-radius:10px;padding:11px 18px;font:600 14px inherit;font-family:inherit;color:#fff;background:linear-gradient(135deg,var(--p2),var(--p1));cursor:pointer}
+  a{display:block;margin-top:22px;font-size:12px;color:var(--t2)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>📷 Absen Siswa</h1>
+  <p class="sub">Arahkan kamera ke QR Code kartu siswa.<br>Absen hanya bisa dilakukan saat guru membuka sesi.</p>
+  <div id="qr-reader"></div>
+  <div class="st info" id="st">🔐 Menyiapkan…</div>
+  <button class="btn" id="btn-ulang" style="display:none" onclick="location.reload()">Coba lagi</button>
+  <a href="index.html">Bukan siswa? Halaman utama</a>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getDatabase, ref, get, set, onValue, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { firebaseConfig } from "./assets/firebase-config.js";
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getDatabase(app);
+
+const st = document.getElementById('st');
+const tampil = (m, c) => { st.textContent = m; st.className = 'st ' + c; };
+let busy = false, scanner = null, offset = 0;
+
+// Selisih jam HP dengan jam server, hanya untuk menentukan tanggal (bukan untuk validasi)
+onValue(ref(db, '.info/serverTimeOffset'), s => { offset = s.val() || 0; });
+const tanggalServer = () => {
+  // tanggal WITA/lokal berdasarkan jam server, bukan jam HP
+  const d = new Date(Date.now() + offset);
+  const p = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+};
+const namaDepan = n => String(n || '').trim().split(/\s+/)[0] || 'Siswa';
+
+function siapLagi() {
+  setTimeout(async () => {
+    busy = false;
+    if (scanner) { try { await scanner.resume(); } catch (e) {} }
+    tampil('📷 Arahkan kamera ke QR siswa berikutnya', 'info');
+  }, 2800);
+}
+
+async function onScan(teks) {
+  if (busy) return;
+  const token = String(teks).trim();
+  if (!/^[A-Za-z0-9]{12}$/.test(token)) return; // bukan QR kartu yang valid
+  busy = true;
+  try { await scanner.pause(true); } catch (e) {}
+  tampil('⏳ Memeriksa…', 'info');
+  try {
+    const idx = await get(ref(db, `siswa_by_token/${token}`));
+    if (!idx.exists()) { tampil('❌ Kartu tidak dikenal. Hubungi guru.', 'err'); return siapLagi(); }
+    const { kelas, uid, nama } = idx.val();
+
+    const tanggal = tanggalServer();
+    const [sesi, thn] = await Promise.all([
+      get(ref(db, `sesi_absen/${kelas}/${tanggal}`)),
+      get(ref(db, 'pengaturan/tahunAjaran'))
+    ]);
+    if (!sesi.exists()) { tampil('⏰ Absen kelas ini belum dibuka oleh guru.', 'err'); return siapLagi(); }
+    if (!thn.exists()) { tampil('⚠️ Tahun ajaran belum diatur guru.', 'err'); return siapLagi(); }
+
+    const path = `absensi_siswa/${thn.val()}/${kelas}/${tanggal}/${uid}`;
+    if ((await get(ref(db, path))).exists()) {
+      tampil(`⚠️ ${namaDepan(nama)} sudah absen hari ini.`, 'err'); return siapLagi();
+    }
+    // Waktu diisi server; rules menolak bila sesi tidak aktif atau token tidak cocok
+    await set(ref(db, path), {
+      status: 'H', keterangan: 'Absen mandiri via QR',
+      dicatatOleh: 'QR Mandiri', waktu: serverTimestamp(), token
+    });
+    tampil(`✅ Absen berhasil, ${namaDepan(nama)}!`, 'ok');
+  } catch (err) {
+    const ditolak = /permission/i.test(err.message);
+    tampil(ditolak ? '⏰ Sesi absen sudah ditutup atau belum dibuka.' : '❌ Gagal menyimpan. Coba lagi.', 'err');
+  }
+  siapLagi();
+}
+
+(async () => {
+  try { await signInAnonymously(auth); }
+  catch (e) { tampil('❌ Gagal menyiapkan sesi. Muat ulang halaman.', 'err'); document.getElementById('btn-ulang').style.display = 'inline-block'; return; }
+  scanner = new Html5Qrcode('qr-reader');
+  try {
+    await scanner.start({ facingMode: 'environment' }, { fps: 10, qrbox: { width: 240, height: 240 } }, onScan, () => {});
+    tampil('📷 Arahkan kamera ke QR Code', 'info');
+  } catch (e) {
+    tampil('❌ Kamera tidak bisa diakses. Izinkan kamera lalu coba lagi.', 'err');
+    document.getElementById('btn-ulang').style.display = 'inline-block';
+  }
+})();
+
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {});
+</script>
+</body>
+</html>

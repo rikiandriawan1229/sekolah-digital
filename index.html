@@ -27,6 +27,13 @@
   .menu .ic{font-size:22px;width:40px;height:40px;border-radius:10px;background:#EEF2FF;display:flex;align-items:center;justify-content:center;flex-shrink:0}
   .menu .txt strong{display:block;font-size:14.5px;font-weight:700}
   .menu .txt span{display:block;font-size:12px;color:var(--t2);margin-top:2px}
+  .cta{display:grid;gap:12px;margin-bottom:8px}
+  .cta button,.cta a{display:flex;align-items:center;justify-content:center;gap:10px;border:0;border-radius:16px;padding:22px 18px;font:800 18px 'Plus Jakarta Sans',sans-serif;text-decoration:none;cursor:pointer;color:#fff}
+  .cta .g{background:linear-gradient(135deg,var(--p2),var(--p1))}
+  .cta .s{background:linear-gradient(135deg,#059669,#10B981)}
+  #guru-menu{display:none;margin-top:6px}
+  #guru-menu.show{display:grid}
+  .back{background:none;border:0;color:var(--t2);font:600 12px inherit;font-family:inherit;text-decoration:underline;cursor:pointer;margin:14px auto 0;display:block}
   .foot{text-align:center;margin-top:24px;font-size:11.5px;color:var(--t3)}
   .status{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--t2);background:var(--surface);border:1px solid var(--border);padding:5px 12px;border-radius:20px;margin-top:14px}
   .dot{width:7px;height:7px;border-radius:50%;background:#94A3B8}
@@ -39,31 +46,37 @@
     <div class="brand">
       <div class="logo">🎓</div>
       <h1>OneApp</h1>
-      <p>Nilai &amp; Absensi Siswa — akses dari mana saja, selama terhubung internet</p>
+      <p>Layanan digital sekolah. Pilih peran Anda.</p>
     </div>
 
-    <nav class="menu">
-      <a href="input-nilai.html">
-        <span class="ic">📝</span>
-        <span class="txt"><strong>Input Nilai</strong><span>Guru mencatat nilai per kelas &amp; mata pelajaran</span></span>
-      </a>
-      <a href="absensi-siswa.html">
-        <span class="ic">🗓️</span>
-        <span class="txt"><strong>Absensi Siswa</strong><span>Wali kelas mencatat kehadiran harian</span></span>
-      </a>
-      <a href="rekap-nilai.html">
-        <span class="ic">📊</span>
-        <span class="txt"><strong>Rekap Nilai</strong><span>Laporan, peringkat, export Excel &amp; cetak PDF</span></span>
-      </a>
-    </nav>
+    <div class="cta" id="pilih">
+      <button class="g" onclick="tampilGuru(true)">👩‍🏫 Saya Guru</button>
+      <a class="s" href="siswa.html">🎓 Saya Siswa · Absen</a>
+    </div>
+
+    <div id="guru-menu">
+      <nav class="menu">
+        <a href="input-nilai.html"><span class="ic">📝</span><span class="txt"><strong>Input Nilai</strong><span>Catat nilai per kelas &amp; mata pelajaran (login guru)</span></span></a>
+        <a href="absensi-siswa.html"><span class="ic">🗓️</span><span class="txt"><strong>Absensi Siswa</strong><span>Buka sesi absen, tandai kehadiran, cetak kartu QR</span></span></a>
+        <a href="rekap-nilai.html"><span class="ic">📊</span><span class="txt"><strong>Rekap Nilai</strong><span>Laporan, peringkat, export Excel &amp; cetak PDF</span></span></a>
+      </nav>
+      <button class="back" onclick="tampilGuru(false)">← Kembali</button>
+    </div>
 
     <div style="text-align:center">
       <div class="status" id="net-status"><span class="dot"></span><span id="net-label">Memeriksa koneksi…</span></div>
     </div>
-    <p class="foot">OneApp v1.0 · Data tersimpan aman di cloud (Firebase)</p>
+    <p class="foot">OneApp v1.1 · Data tersimpan aman di cloud (Firebase)</p>
   </div>
 
 <script>
+  function tampilGuru(on){
+    document.getElementById('guru-menu').classList.toggle('show', on);
+    document.getElementById('pilih').style.display = on ? 'none' : 'grid';
+    history.replaceState(null, '', on ? '#guru' : location.pathname);
+  }
+  if (location.hash === '#guru') tampilGuru(true);
+
   function updateStatus(){
     const dot = document.querySelector('#net-status .dot');
     const label = document.getElementById('net-label');

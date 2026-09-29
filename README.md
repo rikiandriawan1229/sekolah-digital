@@ -10,7 +10,8 @@ terhubung ke internet** — tidak perlu instalasi, tidak perlu server sendiri.
 OneApp/
 ├── index.html              # Halaman utama / menu navigasi
 ├── input-nilai.html        # Guru: input nilai per kelas & mapel
-├── absensi-siswa.html      # Wali kelas: catat kehadiran harian
+├── absensi-siswa.html      # Guru: sesi absen, kehadiran harian, cetak kartu QR
+├── siswa.html              # Siswa: absen mandiri scan QR (tanpa login)
 ├── rekap-nilai.html        # Laporan, peringkat, export Excel & cetak PDF
 ├── assets/
 │   └── firebase-config.js  # Konfigurasi Firebase (SATU sumber, dipakai semua halaman)
@@ -107,3 +108,37 @@ desktop/HP — tetap membutuhkan internet saat dipakai.
 | "Login gagal" padahal email/password benar | Sign-in method Email/Password belum diaktifkan di Firebase Console |
 | Data tidak muncul / tidak tersimpan | Rules belum dideploy, atau pengguna belum login |
 | Aplikasi tidak bisa dibuka di device lain | Belum di-deploy (masih hanya file lokal) — lihat bagian 4 |
+
+## 8. Absen Mandiri Siswa (v1.1)
+
+1. Guru login di **absensi-siswa.html**, isi **Tahun Ajaran** (mis. `2025/2026`).
+2. Pilih kelas, klik **Cetak Kartu QR** (membuat kode acak per siswa, aman dijalankan ulang).
+3. Guru klik **Buka 30/60 menit** saat absen dimulai. Siswa scan kartu di **siswa.html**.
+4. Rules memvalidasi di server: sesi aktif, jam server, kartu cocok dengan siswa, dan tidak bisa absen dua kali.
+
+Wajib: **Authentication → Sign-in method → Anonymous** diaktifkan, lalu deploy rules:
+`firebase deploy --only database`.
+Migrasi: data lama tetap aman; QR lama berisi NISN tidak lagi berfungsi, cetak ulang kartu.
+Iframe Blogger perlu `allow="camera"`, contoh: `<iframe src=".../siswa.html" allow="camera"></iframe>`.
+
+## 9. Login & Peran (v1.2)
+
+- Login, logout, dan penjaga akses ada di satu file: `assets/auth.js`. Login sekali, berlaku di semua halaman guru.
+- Sesi anonim siswa otomatis ditolak di halaman guru.
+- Peran diatur di Realtime Database: `users/{uid}/role` = `admin` | `guru` | `kepsek`. Tanpa isian, dianggap `guru`.
+- `kepsek` hanya bisa membuka Rekap Nilai dan tidak bisa menulis data (ditegakkan di `database.rules.json`).
+- Deploy ulang rules: `firebase deploy --only database`.
+
+## 10. Fitur Lanjutan (v2.0 FINAL)
+
+- **Cetak Lembar Harian** (absensi-siswa.html): kop sekolah, tabel H/S/I/A, rekap, tanda tangan kepala sekolah & wali kelas. Isi dulu *Data Sekolah* (nama kepsek & NIP) sekali; NIP wali kelas disimpan di perangkat guru.
+- **Unduh Template Excel** (input-nilai.html, menu Import): kolom sesuai validator impor + lembar petunjuk.
+- **Folder `blogger/`**: HTML siap tempel untuk halaman Tentang, Kebijakan Privasi, indeks Materi Belajar, dan `iframe-embed.txt`. Ganti semua `[TANDA KURUNG SIKU]`.
+
+## 11. Urutan Pemasangan Ringkas
+
+1. Firebase Console: aktifkan Authentication **Email/Password** dan **Anonymous**; tambahkan domain hosting ke Authorized domains.
+2. `firebase deploy --only database` (pasang rules).
+3. Upload isi folder ini ke GitHub Pages (atau `firebase deploy`).
+4. Login guru, isi Tahun Ajaran & Data Sekolah, cetak kartu QR tiap kelas.
+5. Tempel halaman dari `blogger/` dan pasang iframe.

@@ -10,7 +10,7 @@
   <title>Absensi Siswa · Wali Kelas</title>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
     rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
     :root {
       --p1: #6C63FF;
@@ -359,7 +359,8 @@
       border-radius: var(--radius);
       font-size: 14px;
       font-weight: 700;
-      display: none
+      display: none;
+      white-space:pre-line
     }
 
     .qr-status.ok {
@@ -444,20 +445,10 @@
         <label>Email</label>
         <input type="text" id="login-email" placeholder="guru@sekolah.id" style="margin-bottom:12px">
         <label>Kata Sandi</label>
-        <input type="text" id="login-pass" placeholder="••••••" style="margin-bottom:16px">
+        <input type="password" id="login-pass" placeholder="••••••" style="margin-bottom:16px">
         <button class="btn btn-prim" style="width:100%" onclick="doLogin()">Masuk</button>
       </div>
-      <button class="link-siswa btn-scan" onclick="bukaModeSiswa()">🎓 Saya siswa, mau absen scan QR</button>
-    </div>
-  </div>
-
-  <div id="qr-screen">
-    <h1>📷 Absensi Siswa</h1>
-    <p class="sub">Arahkan kamera ke QR Code kartu siswa kamu.<br>Absen dibuka pukul 06.30–07.00.</p>
-    <div id="qr-reader"></div>
-    <div class="qr-status" id="qr-status"></div>
-    <div class="qr-back">
-      <button class="link-siswa" onclick="tutupModeSiswa()">← Kembali ke Login Guru</button>
+      <a class="link-siswa" href="siswa.html">🎓 Saya siswa, mau absen →</a>
     </div>
   </div>
 
@@ -475,7 +466,7 @@
       <div class="row">
         <div>
           <label>Tahun Ajaran</label>
-          <input type="text" id="sel-tahun" value="2025/2026">
+          <input type="text" id="sel-tahun" placeholder="2025/2026" onchange="simpanTahun()">
         </div>
         <div>
           <label>Kelas</label>
@@ -502,6 +493,31 @@
       </div>
     </div>
 
+
+    <details class="card" id="sekolah-card">
+      <summary style="cursor:pointer;font-size:14px;font-weight:700">🏫 Data Sekolah (untuk kop &amp; tanda tangan cetak)</summary>
+      <div class="row" style="margin-top:12px">
+        <div><label>Nama Sekolah</label><input type="text" id="sk-nama"></div>
+        <div><label>Tempat (untuk tanggal TTD)</label><input type="text" id="sk-tempat"></div>
+        <div><label>Nama Kepala Sekolah</label><input type="text" id="sk-kepsek"></div>
+        <div><label>NIP Kepala Sekolah</label><input type="text" id="sk-nipkepsek"></div>
+        <div><label>NIP Wali Kelas (Anda)</label><input type="text" id="sk-nipguru"></div>
+      </div>
+      <button class="btn btn-sec" style="margin-top:12px" onclick="simpanSekolah()">💾 Simpan Data Sekolah</button>
+    </details>
+
+    <div class="card" id="sesi-card">
+      <h2>Sesi Absen Mandiri Siswa</h2>
+      <p id="sesi-info" style="font-size:13px;color:var(--t2);margin-bottom:12px">Pilih kelas &amp; tanggal dulu.</p>
+      <div class="quick-actions">
+        <button class="btn btn-prim" onclick="bukaSesi(30)">▶ Buka 30 menit</button>
+        <button class="btn btn-sec" onclick="bukaSesi(60)">▶ Buka 60 menit</button>
+        <button class="btn btn-sec" onclick="tutupSesi()">■ Tutup sekarang</button>
+        <button class="btn btn-sec" onclick="cetakKartu()">🪪 Cetak Kartu QR kelas ini</button>
+      </div>
+      <p style="font-size:11px;color:var(--t3)">Siswa absen di <b>siswa.html</b>. Sesi divalidasi memakai jam server, bukan jam HP. Kartu QR berisi kode acak, bukan NISN.</p>
+    </div>
+
     <div class="card" id="siswa-card">
       <h2>Daftar Kehadiran</h2>
       <div class="quick-actions">
@@ -521,6 +537,7 @@
     </div>
 
     <div style="text-align:right">
+      <button class="btn btn-sec" onclick="cetakLembar()">🖨️ Cetak Lembar Harian</button>
       <button class="btn btn-prim" id="btn-simpan" onclick="simpanAbsensi()" disabled>💾 Simpan Absensi Hari
         Ini</button>
     </div>
@@ -529,21 +546,18 @@
   <div class="toast" id="toast"></div>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, signInAnonymously, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-    import { firebaseConfig } from "./assets/firebase-config.js";
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getDatabase(app);
+    import { getDatabase, ref, get, set, remove, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+  import { db, initGuru } from "./assets/auth.js";
 
     let currentUserNama = '';
     let currentSiswaList = [];       // [{uid, nama}]
     let currentAbsensiState = {};    // {uid: {status:'H'|'S'|'I'|'A', keterangan:''}}
 
     function esc(s) { const d = document.createElement('div'); d.innerText = s ?? ''; return d.innerHTML; }
-    function todayStr() { return new Date().toISOString().slice(0, 10); }
+    function todayStr() { const d = new Date(), p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; }
+    let serverOffset = 0;
+    onValue(ref(db, '.info/serverTimeOffset'), sn => { serverOffset = sn.val() || 0; });
+    const serverNow = () => Date.now() + serverOffset;
 
     function showToast(msg, type = 'info') {
       const t = document.getElementById('toast');
@@ -552,35 +566,10 @@
       setTimeout(() => t.classList.remove('show'), 2600);
     }
 
-    window.doLogin = async () => {
-      const email = document.getElementById('login-email').value.trim();
-      const pass = document.getElementById('login-pass').value;
-      if (!email || !pass) { showToast('Isi email & kata sandi', 'warning'); return; }
-      try {
-        await signInWithEmailAndPassword(auth, email, pass);
-      } catch (err) {
-        showToast('❌ Login gagal: periksa email/kata sandi', 'error');
-      }
-    };
-
-    window.doLogout = async () => { await signOut(auth); };
-
-    onAuthStateChanged(auth, async (user) => {
-      document.body.classList.add('auth-ready');
-      if (document.getElementById('qr-screen').style.display === 'block') return; // sedang mode siswa, jangan ganggu
-      if (!user) {
-        document.getElementById('login-screen').style.display = 'block';
-        document.getElementById('app-content').style.display = 'none';
-        return;
-      }
-      const snap = await get(ref(db, `users/${user.uid}`));
-      currentUserNama = snap.exists() ? (snap.val().nama || user.email) : user.email;
-
-      document.getElementById('user-badge').textContent = `👤 ${currentUserNama}`;
-      document.getElementById('login-screen').style.display = 'none';
-      document.getElementById('app-content').style.display = 'block';
+    initGuru({ halaman: 'absensi', onReady: async (p) => { currentUserNama = p.nama; window._uid = p.uid;
       document.getElementById('sel-tanggal').value = todayStr();
-    });
+      const th = await get(ref(db, 'pengaturan/tahunAjaran'));
+      document.getElementById('sel-tahun').value = th.exists() ? th.val() : ''; await muatSekolah(); } });
 
     // ══ MUAT DATA SAAT KELAS/TANGGAL DIPILIH ══
     window.muatAbsensi = async () => {
@@ -591,12 +580,14 @@
       const summaryBar = document.getElementById('summary-bar');
 
       if (!kelas || !tanggal) {
+        muatSesi();
         wrap.innerHTML = '<div class="empty">Pilih kelas &amp; tanggal dulu di atas.</div>';
         btnSimpan.disabled = true;
         summaryBar.style.display = 'none';
         return;
       }
 
+      muatSesi();
       wrap.innerHTML = '<div class="empty">Memuat data…</div>';
 
       // 1. Daftar siswa kelas ini (sumber sama dengan halaman input nilai)
@@ -615,7 +606,7 @@
       }
 
       // 2. Absensi yang sudah tersimpan hari itu (kalau ada, guru buka ulang halaman)
-      const tahun = document.getElementById('sel-tahun').value.trim() || '2025/2026';
+      const tahun = document.getElementById('sel-tahun').value.trim() || '';
       currentAbsensiState = {};
       const absenSnap = await get(ref(db, `absensi_siswa/${tahun}/${kelas}/${tanggal}`));
       if (absenSnap.exists()) {
@@ -689,6 +680,7 @@
       const kelas = document.getElementById('sel-kelas').value;
       const tanggal = document.getElementById('sel-tanggal').value;
       const tahun = document.getElementById('sel-tahun').value.trim();
+      if (!/^\d{4}\/\d{4}$/.test(tahun)) { showToast('Isi tahun ajaran, contoh 2025/2026', 'warning'); return; }
 
       const belumDitandai = currentSiswaList.filter(s => !currentAbsensiState[s.uid]?.status);
       if (belumDitandai.length > 0) {
@@ -718,118 +710,166 @@
       navigator.serviceWorker.register('./sw.js').catch(() => { });
     }
 
-    // ══════════ MODE SISWA: SCAN QR ABSENSI ══════════
-    let qrScanner = null;
-    let qrBusy = false; // cegah scan ganda beruntun saat masih memproses
-
-    function jamSekarangValid() {
-      const now = new Date();
-      const menit = now.getHours() * 60 + now.getMinutes();
-      return menit >= (6 * 60 + 30) && menit <= (7 * 60); // 06:30–07:00
-    }
-
-    function tampilStatus(msg, jenis) {
-      const el = document.getElementById('qr-status');
-      el.textContent = msg;
-      el.className = `qr-status ${jenis}`;
-    }
-
-    window.bukaModeSiswa = async () => {
-      document.getElementById('login-screen').style.display = 'none';
-      document.getElementById('app-content').style.display = 'none';
-      document.getElementById('qr-screen').style.display = 'block';
-
-      if (!jamSekarangValid()) {
-        tampilStatus('⏰ Absensi hanya dibuka pukul 06.30–07.00. Silakan datang lagi besok pagi.', 'err');
-        return;
-      }
-
-      tampilStatus('🔐 Menyiapkan sesi…', 'info');
-      try {
-        await signInAnonymously(auth);
-      } catch (err) {
-        tampilStatus('❌ Gagal menyiapkan sesi. Coba muat ulang halaman.', 'err');
-        return;
-      }
-
-      tampilStatus('📷 Arahkan kamera ke QR Code', 'info');
-      qrScanner = new Html5Qrcode('qr-reader');
-      try {
-        await qrScanner.start(
-          { facingMode: 'environment' },
-          { fps: 10, qrbox: { width: 240, height: 240 } },
-          onScanSukses,
-          () => { } // abaikan frame yang belum terbaca
-        );
-      } catch (err) {
-        tampilStatus('❌ Tidak bisa mengakses kamera. Pastikan izin kamera diaktifkan.', 'err');
-      }
+    // ══════════ SESI ABSEN & KARTU QR ══════════
+    window.simpanTahun = async () => {
+      const t = document.getElementById('sel-tahun').value.trim();
+      if (!/^\d{4}\/\d{4}$/.test(t)) { showToast('Format tahun ajaran: 2025/2026', 'warning'); return; }
+      await set(ref(db, 'pengaturan/tahunAjaran'), t);
+      showToast('✅ Tahun ajaran disimpan', 'success');
+      muatAbsensi();
     };
 
-    window.tutupModeSiswa = async () => {
-      if (qrScanner) { try { await qrScanner.stop(); qrScanner.clear(); } catch (e) { } qrScanner = null; }
-      document.getElementById('qr-screen').style.display = 'none';
-      document.getElementById('qr-status').className = 'qr-status';
-      document.getElementById('login-screen').style.display = 'block';
+    const fmtJam = ms => new Date(ms).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+
+    async function muatSesi() {
+      const kelas = document.getElementById('sel-kelas').value;
+      const tanggal = document.getElementById('sel-tanggal').value;
+      const el = document.getElementById('sesi-info');
+      if (!kelas || !tanggal) { el.textContent = 'Pilih kelas & tanggal dulu.'; return; }
+      const sn = await get(ref(db, `sesi_absen/${kelas}/${tanggal}`));
+      if (!sn.exists()) { el.innerHTML = '⚪ Sesi belum dibuka.'; return; }
+      const { buka, tutup } = sn.val();
+      const aktif = serverNow() >= buka && serverNow() <= tutup;
+      el.innerHTML = aktif ? `🟢 <b>Sesi terbuka</b> ${fmtJam(buka)}–${fmtJam(tutup)}` : `🔴 Sesi ditutup (${fmtJam(buka)}–${fmtJam(tutup)})`;
+    }
+
+    window.bukaSesi = async (menit) => {
+      const kelas = document.getElementById('sel-kelas').value;
+      const tanggal = document.getElementById('sel-tanggal').value;
+      if (!kelas || !tanggal) { showToast('Pilih kelas & tanggal dulu', 'warning'); return; }
+      if (!document.getElementById('sel-tahun').value.trim()) { showToast('Isi & simpan tahun ajaran dulu', 'warning'); return; }
+      if (tanggal !== todayStr()) { showToast('Sesi hanya bisa dibuka untuk hari ini', 'warning'); return; }
+      await set(ref(db, `sesi_absen/${kelas}/${tanggal}`), { buka: serverNow(), tutup: serverNow() + menit * 60000, dibukaOleh: currentUserNama });
+      showToast(`✅ Sesi dibuka ${menit} menit`, 'success');
+      muatSesi();
     };
 
-    async function onScanSukses(nisnHasilScan) {
-      if (qrBusy) return;
-      const nisn = String(nisnHasilScan).trim();
-      if (!/^\d{5,15}$/.test(nisn)) return; // bukan QR NISN yang valid, abaikan diam-diam
+    window.tutupSesi = async () => {
+      const kelas = document.getElementById('sel-kelas').value;
+      const tanggal = document.getElementById('sel-tanggal').value;
+      if (!kelas || !tanggal) return;
+      await set(ref(db, `sesi_absen/${kelas}/${tanggal}`), { buka: serverNow() - 2000, tutup: serverNow() - 1000, dibukaOleh: currentUserNama });
+      showToast('Sesi ditutup', 'success'); muatSesi();
+      muatAbsensi();
+    };
 
-      qrBusy = true;
-      if (qrScanner) { try { await qrScanner.pause(true); } catch (e) { } }
-      tampilStatus('⏳ Memeriksa data…', 'info');
-
-      if (!jamSekarangValid()) {
-        tampilStatus('⏰ Waktu absensi sudah lewat (06.30–07.00).', 'err');
-        qrBusy = false;
-        return;
-      }
-
-      try {
-        const idxSnap = await get(ref(db, `siswa_by_nisn/${nisn}`));
-        if (!idxSnap.exists()) {
-          tampilStatus('❌ NISN tidak terdaftar. Hubungi wali kelas.', 'err');
-          siapScanLagi();
-          return;
-        }
-        const { kelas, uid, nama } = idxSnap.val();
-        const tahun = '2025/2026'; // sesuaikan bila tahun ajaran berganti
-        const tanggal = new Date().toISOString().slice(0, 10);
-        const pathAbsen = `absensi_siswa/${tahun}/${kelas}/${tanggal}/${uid}`;
-
-        const cekSnap = await get(ref(db, pathAbsen));
-        if (cekSnap.exists()) {
-          tampilStatus(`⚠️ ${nama} sudah absen hari ini.`, 'err');
-          siapScanLagi();
-          return;
-        }
-
-        await set(ref(db, pathAbsen), {
-          status: 'H',
-          keterangan: 'Absen mandiri via QR',
-          dicatatOleh: 'QR Mandiri',
-          waktu: Date.now()
-        });
-
-        tampilStatus(`✅ Absen berhasil, ${nama}!`, 'ok');
-        siapScanLagi();
-      } catch (err) {
-        tampilStatus('❌ Gagal menyimpan absen: ' + err.message, 'err');
-        siapScanLagi();
-      }
+    function buatToken() {
+      const abc = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789', a = new Uint32Array(12);
+      crypto.getRandomValues(a);
+      return Array.from(a, n => abc[n % abc.length]).join('');
     }
 
-    function siapScanLagi() {
-      // Beri jeda 2.5 detik agar siswa sempat baca status, lalu otomatis siap scan siswa berikutnya
-      setTimeout(async () => {
-        qrBusy = false;
-        if (qrScanner) { try { await qrScanner.resume(); } catch (e) { } }
-        if (jamSekarangValid()) tampilStatus('📷 Arahkan kamera ke QR Code siswa berikutnya', 'info');
-      }, 2500);
+    window.cetakKartu = async () => {
+      const kelas = document.getElementById('sel-kelas').value;
+      if (!kelas) { showToast('Pilih kelas dulu', 'warning'); return; }
+      const sn = await get(ref(db, `siswa/${kelas}`));
+      if (!sn.exists()) { showToast('Belum ada siswa di kelas ini', 'warning'); return; }
+      const list = [];
+      for (const c of Object.entries(sn.val())) {
+        const [uid, v] = c;
+        let token = v.token;
+        if (!token) {
+          token = buatToken();
+          await set(ref(db, `siswa/${kelas}/${uid}/token`), token);
+        }
+        // indeks token -> siswa (dipakai halaman siswa; NISN tidak ikut terekspos)
+        await set(ref(db, `siswa_by_token/${token}`), { kelas, uid, nama: v.nama });
+        list.push({ nama: v.nama, token });
+      }
+      list.sort((a, b) => a.nama.localeCompare(b.nama));
+      const w = window.open('', '_blank');
+      if (!w) { showToast('Izinkan pop-up untuk mencetak kartu', 'warning'); return; }
+      w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Kartu QR ${esc(kelas)}</title>
+        <style>body{font-family:sans-serif;margin:10mm}.g{display:grid;grid-template-columns:repeat(3,1fr);gap:6mm}
+        .k{border:1px dashed #64748B;border-radius:8px;padding:8px;text-align:center;break-inside:avoid}
+        .k b{display:block;font-size:12px;margin-top:6px}.k span{font-size:10px;color:#64748B}.q{display:flex;justify-content:center}</style></head>
+        <body><h3>Kartu Absen Kelas ${esc(kelas)}</h3><p style="font-size:11px">Kartu bersifat pribadi. Jangan dipinjamkan.</p>
+        <div class="g" id="g"></div></body></html>`);
+      w.document.close();
+      const g = w.document.getElementById('g');
+      list.forEach(x => {
+        const d = w.document.createElement('div'); d.className = 'k';
+        d.innerHTML = `<div class="q"></div><b>${esc(x.nama)}</b><span>Kelas ${esc(kelas)}</span>`;
+        g.appendChild(d);
+        new QRCode(d.querySelector('.q'), { text: x.token, width: 110, height: 110 });
+      });
+      setTimeout(() => w.print(), 600);
+    };
+  
+    // ══════════ DATA SEKOLAH & CETAK LEMBAR HARIAN ══════════
+    const SK_DEFAULT = { nama: 'SD Negeri Wawonggole', tempat: 'Wawonggole', kepsek: '', nipKepsek: '' };
+    let sekolah = { ...SK_DEFAULT }, nipGuru = '';
+    const skId = { nama: 'sk-nama', tempat: 'sk-tempat', kepsek: 'sk-kepsek', nipKepsek: 'sk-nipkepsek' };
+
+    async function muatSekolah() {
+      const sn = await get(ref(db, 'pengaturan/sekolah'));
+      sekolah = { ...SK_DEFAULT, ...(sn.exists() ? sn.val() : {}) };
+      nipGuru = localStorage.getItem('nipGuru') || '';
+      for (const [k, id] of Object.entries(skId)) document.getElementById(id).value = sekolah[k] || '';
+      document.getElementById('sk-nipguru').value = nipGuru;
     }
+
+    window.simpanSekolah = async () => {
+      const v = {};
+      for (const [k, id] of Object.entries(skId)) v[k] = document.getElementById(id).value.trim();
+      if (!v.nama) { showToast('Nama sekolah wajib diisi', 'warning'); return; }
+      await set(ref(db, 'pengaturan/sekolah'), v);
+      nipGuru = document.getElementById('sk-nipguru').value.trim();
+      localStorage.setItem('nipGuru', nipGuru); // NIP guru disimpan di perangkat ini saja
+      sekolah = v;
+      showToast('✅ Data sekolah disimpan', 'success');
+    };
+
+    const BULAN = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+    const HARI = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+    const STATUS_LBL = { H: 'Hadir', S: 'Sakit', I: 'Izin', A: 'Alfa' };
+
+    window.cetakLembar = () => {
+      const kelas = document.getElementById('sel-kelas').value;
+      const tanggal = document.getElementById('sel-tanggal').value;
+      if (!kelas || !tanggal || currentSiswaList.length === 0) { showToast('Pilih kelas & tanggal yang berisi siswa dulu', 'warning'); return; }
+      const [y, m, d] = tanggal.split('-').map(Number);
+      const dt = new Date(y, m - 1, d);
+      const tglPanjang = `${d} ${BULAN[m - 1]} ${y}`;
+      const tahun = document.getElementById('sel-tahun').value.trim();
+      const cnt = { H: 0, S: 0, I: 0, A: 0, kosong: 0 };
+      const baris = currentSiswaList.map((s, i) => {
+        const st = currentAbsensiState[s.uid]?.status;
+        if (st) cnt[st]++; else cnt.kosong++;
+        const cell = k => `<td class="c">${st === k ? '✓' : ''}</td>`;
+        return `<tr><td class="c">${i + 1}</td><td>${esc(s.nama)}</td>${cell('H')}${cell('S')}${cell('I')}${cell('A')}<td>${esc(currentAbsensiState[s.uid]?.keterangan || '')}</td></tr>`;
+      }).join('');
+      const w = window.open('', '_blank');
+      if (!w) { showToast('Izinkan pop-up untuk mencetak', 'warning'); return; }
+      w.document.write(`<!DOCTYPE html><html lang="id"><head><meta charset="utf-8"><title>Absensi ${esc(kelas)} ${tanggal}</title>
+      <style>
+        @page{size:A4;margin:15mm}
+        body{font-family:'Times New Roman',serif;font-size:12pt;color:#000}
+        .kop{text-align:center;border-bottom:3px double #000;padding-bottom:6px;margin-bottom:12px}
+        .kop h2{margin:0;font-size:15pt}.kop p{margin:2px 0;font-size:10.5pt}
+        h3{text-align:center;margin:8px 0 10px;font-size:13pt;text-decoration:underline}
+        .meta{font-size:11pt;margin-bottom:8px}.meta td{padding:1px 8px 1px 0}
+        table.t{width:100%;border-collapse:collapse;font-size:11pt}
+        table.t th,table.t td{border:1px solid #000;padding:4px 6px}
+        table.t th{background:#eee}.c{text-align:center;width:34px}
+        .rk{margin-top:10px;font-size:11pt}
+        .ttd{display:flex;justify-content:space-between;margin-top:28px;font-size:11pt;break-inside:avoid}
+        .ttd div{width:46%;text-align:center}.sp{height:64px}
+      </style></head><body>
+      <div class="kop"><h2>${esc(sekolah.nama.toUpperCase())}</h2><p>LEMBAR ABSENSI HARIAN SISWA</p></div>
+      <table class="meta"><tr><td>Kelas</td><td>: ${esc(kelas)}</td></tr>
+        <tr><td>Hari, Tanggal</td><td>: ${HARI[dt.getDay()]}, ${tglPanjang}</td></tr>
+        <tr><td>Tahun Ajaran</td><td>: ${esc(tahun || '-')}</td></tr></table>
+      <table class="t"><thead><tr><th class="c">No</th><th>Nama Siswa</th><th class="c">H</th><th class="c">S</th><th class="c">I</th><th class="c">A</th><th style="width:26%">Keterangan</th></tr></thead>
+      <tbody>${baris}</tbody></table>
+      <p class="rk"><b>Rekapitulasi:</b> Hadir ${cnt.H} · Sakit ${cnt.S} · Izin ${cnt.I} · Alfa ${cnt.A}${cnt.kosong ? ` · Belum ditandai ${cnt.kosong}` : ''} · Jumlah siswa ${currentSiswaList.length}</p>
+      <div class="ttd">
+        <div>Mengetahui,<br>Kepala Sekolah<div class="sp"></div><b><u>${esc(sekolah.kepsek || '..............................')}</u></b><br>NIP. ${esc(sekolah.nipKepsek || '..............................')}</div>
+        <div>${esc(sekolah.tempat || '')}, ${tglPanjang}<br>Wali Kelas ${esc(kelas)}<div class="sp"></div><b><u>${esc(currentUserNama)}</u></b><br>NIP. ${esc(nipGuru || '..............................')}</div>
+      </div></body></html>`);
+      w.document.close();
+      setTimeout(() => w.print(), 400);
+    };
   </script>
 </body>
 

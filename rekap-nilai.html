@@ -89,7 +89,7 @@
       <label>Email</label>
       <input type="text" id="login-email" placeholder="admin@sekolah.id" style="margin-bottom:12px">
       <label>Kata Sandi</label>
-      <input type="text" id="login-pass" placeholder="••••••" style="margin-bottom:16px">
+      <input type="password" id="login-pass" placeholder="••••••" style="margin-bottom:16px">
       <button class="btn btn-prim" style="width:100%" onclick="doLogin()">Masuk</button>
     </div>
   </div>
@@ -148,14 +148,8 @@
 <div class="toast" id="toast"></div>
 
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
   import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-  import { firebaseConfig } from "./assets/firebase-config.js";
-
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getDatabase(app);
+  import { db, initGuru } from "./assets/auth.js";
 
   let currentUserNama = '';
   let lastRekapData = null; // dipakai ulang untuk export excel
@@ -167,29 +161,7 @@
     setTimeout(() => t.classList.remove('show'), 2600);
   }
 
-  window.doLogin = async () => {
-    const email = document.getElementById('login-email').value.trim();
-    const pass = document.getElementById('login-pass').value;
-    if (!email || !pass) { showToast('Isi email & kata sandi', 'warning'); return; }
-    try { await signInWithEmailAndPassword(auth, email, pass); }
-    catch { showToast('❌ Login gagal', 'error'); }
-  };
-
-  window.doLogout = async () => { await signOut(auth); };
-
-  onAuthStateChanged(auth, async (user) => {
-    document.body.classList.add('auth-ready');
-    if (!user) {
-      document.getElementById('login-screen').style.display = 'block';
-      document.getElementById('app-content').style.display = 'none';
-      return;
-    }
-    const snap = await get(ref(db, `users/${user.uid}`));
-    currentUserNama = snap.exists() ? (snap.val().nama || user.email) : user.email;
-    document.getElementById('user-badge').textContent = `👤 ${currentUserNama}`;
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('app-content').style.display = 'block';
-  });
+  initGuru({ halaman: 'rekap', onReady: async (p) => { currentUserNama = p.nama; } });
 
   // ══ GENERATE REKAP ══
   window.generateRekap = async () => {
